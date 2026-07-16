@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Página Web</title>
+  <meta name="description" content="Mi primera página web publicada con GitHub Pages y dominio propio.">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.9s ease both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <!-- ================= CABECERA ================= -->
+  <header class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 text-white">
+    <nav class="max-w-4xl mx-auto flex items-center justify-between px-6 py-5">
+      <span class="font-bold text-lg tracking-tight">MiWeb</span>
+      <ul class="hidden sm:flex gap-6 text-sm font-medium text-indigo-100">
+        <li><a href="#inicio" class="hover:text-white transition">Inicio</a></li>
+        <li><a href="#sobre" class="hover:text-white transition">Sobre mí</a></li>
+        <li><a href="#publicar" class="hover:text-white transition">Cómo publicarla</a></li>
+      </ul>
+    </nav>
+    <div id="inicio" class="max-w-4xl mx-auto px-6 pt-12 pb-20 text-center fade-in">
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">Hola, bienvenido a mi página</h1>
+      <p class="text-indigo-100 text-lg max-w-2xl mx-auto">
+        Esta es una web sencilla, creada con una sola página, lista para publicarse gratis
+        en Internet y conectarla con tu propio dominio.
+      </p>
+      <a href="#publicar"
+         class="inline-block mt-8 bg-white text-indigo-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition">
+        Ver cómo publicarla →
+      </a>
+    </div>
+  </header>
+  <!-- ================= CONTENIDO PRINCIPAL ================= -->
+  <main class="max-w-4xl mx-auto px-6">
+    <!-- Sobre mí -->
+    <section id="sobre" class="py-16 border-b border-slate-200">
+      <h2 class="text-2xl font-bold mb-4 text-slate-900">Sobre mí</h2>
+      <p class="text-slate-600 leading-relaxed mb-4">
+        Escribe aquí el texto que quieras. Puedes hablar de ti, de tu proyecto,
+        de tu negocio o de lo que necesites. Simplemente edita este archivo
+        <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 text-sm">index.html</code>
+        y cambia estas frases por las tuyas.
+      </p>
+      <p class="text-slate-600 leading-relaxed">
+        Todo lo que ves en esta página es texto normal y corriente. No necesitas
+        saber programar para modificarlo: busca el texto, cámbialo y guarda.
+      </p>
+    </section>
+    <!-- Cómo publicarla -->
+    <section id="publicar" class="py-16">
+      <h2 class="text-2xl font-bold mb-2 text-slate-900">Cómo publicarla gratis</h2>
+      <p class="text-slate-600 mb-8">Sigue estos pasos para tenerla online sin coste, con tu dominio de IONOS.</p>
+      <ol class="space-y-6">
+        <li class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">1</span>
+          <div>
+            <h3 class="font-semibold text-slate-900 mb-1">Crea un repositorio en GitHub</h3>
+            <p class="text-slate-600 text-sm">Entra en GitHub y crea un repositorio nuevo (público). Puedes llamarlo, por ejemplo, <code class="bg-slate-100 px-1 rounded">mi-web</code>.</p>
+          </div>
+        </li>
+        <li class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">2</span>
+          <div>
+            <h3 class="font-semibold text-slate-900 mb-1">Sube el archivo index.html</h3>
+            <p class="text-slate-600 text-sm">Dentro del repositorio pulsa <em>“Add file → Upload files”</em> y arrastra este archivo <code class="bg-slate-100 px-1 rounded">index.html</code>. Luego pulsa <em>Commit changes</em>.</p>
+          </div>
+        </li>
+        <li class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">3</span>
+          <div>
+            <h3 class="font-semibold text-slate-900 mb-1">Activa GitHub Pages</h3>
+            <p class="text-slate-600 text-sm">Ve a <em>Settings → Pages</em>. En <em>Branch</em> elige <code class="bg-slate-100 px-1 rounded">main</code> y carpeta <code class="bg-slate-100 px-1 rounded">/ (root)</code>, y guarda. En unos minutos tu web estará en <code class="bg-slate-100 px-1 rounded">https://tuusuario.github.io/mi-web</code>.</p>
+          </div>
+        </li>
+        <li class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">4</span>
+          <div>
+            <h3 class="font-semibold text-slate-900 mb-1">Conecta tu dominio de IONOS</h3>
+            <p class="text-slate-600 text-sm mb-2">En GitHub, en <em>Settings → Pages → Custom domain</em>, escribe tu dominio (ej. <code class="bg-slate-100 px-1 rounded">tudominio.com</code>) y guarda. Esto crea un archivo <code class="bg-slate-100 px-1 rounded">CNAME</code>.</p>
+            <p class="text-slate-600 text-sm mb-2">Luego, en el panel de <strong>IONOS → Dominios → DNS</strong>, configura:</p>
+            <div class="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto font-mono leading-relaxed">
+              <div>Registros <span class="text-amber-300">A</span> (para tudominio.com) apuntando a:</div>
+              <div class="text-emerald-300">185.199.108.153</div>
+              <div class="text-emerald-300">185.199.109.153</div>
+              <div class="text-emerald-300">185.199.110.153</div>
+              <div class="text-emerald-300">185.199.111.153</div>
+              <div class="mt-2">Registro <span class="text-amber-300">CNAME</span> (para www) apuntando a:</div>
+              <div class="text-emerald-300">tuusuario.github.io</div>
+            </div>
+          </div>
+        </li>
+        <li class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">5</span>
+          <div>
+            <h3 class="font-semibold text-slate-900 mb-1">Espera y activa HTTPS</h3>
+            <p class="text-slate-600 text-sm">Los cambios de DNS pueden tardar de minutos a 24 h. Cuando esté listo, marca en GitHub Pages la casilla <em>“Enforce HTTPS”</em>. ¡Listo, tu web estará online y con candado seguro!</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+  </main>
+  <!-- ================= PIE ================= -->
+  <footer class="bg-slate-900 text-slate-400 text-sm text-center py-8">
+    <p>© <span id="year"></span> Mi Página Web · Publicada con GitHub Pages</p>
+  </footer>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
