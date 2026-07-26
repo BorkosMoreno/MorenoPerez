@@ -3,335 +3,554 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consumo Aerotermia - Shelly EM</title>
-  <meta name="description" content="Monitorización en tiempo real del consumo eléctrico de la Aerotermia con medidor Shelly EM.">
-  <!-- Tailwind CSS y Chart.js -->
+
+  <title>Consumo del medidor Shelly</title>
+  <meta name="description" content="Gráfico de consumo instantáneo de la aerotermia medido con Shelly EM.">
+
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>   
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+
+  <style>
     html { scroll-behavior: smooth; }
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    .fade-in { animation: fadeIn 0.7s ease both; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .fade-in { animation: fadeIn 0.9s ease both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- ================= CABECERA ================= -->
-  <header class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 text-white shadow-md">
-    <nav class="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-      <a href="index.html" class="font-bold text-lg tracking-tight hover:opacity-90 transition">MiWeb</a>
-      <ul class="flex gap-6 text-sm font-medium text-indigo-100">
+<body class="bg-slate-50 text-slate-800">
+  <header class="bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 text-white">
+    <nav class="max-w-5xl mx-auto flex items-center justify-between px-6 py-5">
+      <a href="index.html" class="font-bold text-lg tracking-tight">MiWeb</a>
+
+      <ul class="hidden sm:flex gap-6 text-sm font-medium text-indigo-100">
         <li><a href="index.html" class="hover:text-white transition">Inicio</a></li>
-        <li><a href="consumo-del-medidor-shelly.html" class="text-white font-semibold underline underline-offset-4">Aerotermia</a></li>
+        <li><a href="consumo-del-medidor-shelly.html" class="text-white transition">Shelly</a></li>
       </ul>
     </nav>
-    <div class="max-w-5xl mx-auto px-6 pt-6 pb-12 text-center fade-in">
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">Consumo Eléctrico · Aerotermia</h1>
-      <p class="text-indigo-100 text-sm sm:text-base max-w-xl mx-auto">
-        Monitorización del circuito de aerotermia (Pinza 50A · Canal 1) en tiempo real.
+
+    <div class="max-w-5xl mx-auto px-6 pt-10 pb-16 text-center fade-in">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-100">
+        Monitor energético
       </p>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mt-3 mb-4">
+        Consumo del medidor Shelly
+      </h1>
+
+      <p class="text-indigo-100 text-lg max-w-3xl mx-auto">
+        Potencia instantánea de la aerotermia medida con Shelly EM.
+        Datos almacenados en Cloudflare D1 y visualizados en UTC.
+      </p>
+
+      <div class="mt-8">
+        <a href="index.html"
+           class="inline-block bg-white text-indigo-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition">
+          Volver al inicio
+        </a>
+      </div>
     </div>
   </header>
 
-  <!-- ================= CONTENIDO PRINCIPAL ================= -->
-  <main class="max-w-5xl mx-auto px-6 -mt-8 flex-grow w-full pb-16">
-    
-    <!-- Aviso / Mensaje de Error (oculto por defecto) -->
-    <div id="alert-box" class="hidden mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 shadow-sm flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <section id="statusBox" class="rounded-xl border border-sky-200 bg-sky-50 text-sky-800 p-4 text-sm mb-6">
+      <p id="statusTitle" class="font-semibold">Cargando datos...</p>
+      <p id="statusDetail" class="mt-1">Conectando con el Worker de Cloudflare.</p>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-sm text-slate-500">Potencia actual</p>
+        <p id="currentPower" class="text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p class="text-xs text-slate-500 mt-1">Aerotermia</p>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-sm text-slate-500">Media del periodo</p>
+        <p id="averagePower" class="text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p class="text-xs text-slate-500 mt-1">Últimas 24 h</p>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-sm text-slate-500">Máximo</p>
+        <p id="maxPower" class="text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p class="text-xs text-slate-500 mt-1">Últimas 24 h</p>
+      </article>
+
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-sm text-slate-500">Energía estimada</p>
+        <p id="energyKwh" class="text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p class="text-xs text-slate-500 mt-1">kWh del periodo</p>
+      </article>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
         <div>
-          <p class="font-semibold text-sm">Problema de conexión con el Worker o la base de datos</p>
-          <p id="alert-msg" class="text-xs text-red-600">No se pudieron recuperar las lecturas más recientes.</p>
-        </div>
-      </div>
-      <button onclick="fetchData()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-medium px-3 py-1.5 rounded-lg transition">Reintentar</button>
-    </div>
+          <h2 class="text-2xl font-bold text-slate-900">
+            Potencia instantánea de la aerotermia
+          </h2>
 
-    <!-- TARJETAS SUPERIORES (KPIs) -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-      <!-- Actual -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Potencia Actual</p>
-        <p id="kpi-actual" class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mt-2">-- W</p>
-        <p class="text-[11px] text-slate-400 mt-1">Último registro</p>
-      </div>
-      <!-- Media -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Media (24h)</p>
-        <p id="kpi-media" class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-2">-- W</p>
-        <p class="text-[11px] text-slate-400 mt-1">Promedio periodo</p>
-      </div>
-      <!-- Máximo -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Máximo (24h)</p>
-        <p id="kpi-max" class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-2">-- W</p>
-        <p class="text-[11px] text-slate-400 mt-1">Pico registrado</p>
-      </div>
-      <!-- Energía kWh -->
-      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Energía Est. (24h)</p>
-        <p id="kpi-kwh" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-2">-- kWh</p>
-        <p class="text-[11px] text-slate-400 mt-1">Consumo total aprox.</p>
-      </div>
-    </div>
-
-    <!-- SECCIÓN GRÁFICO -->
-    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
-        <div>
-          <h2 class="text-lg font-bold text-slate-900">Potencia Instantánea · Últimas 24 Horas</h2>
-          <p class="text-xs text-slate-500">Muestreo cada minuto · Gráfico escalonado</p>
+          <p class="text-sm text-slate-500 mt-1">
+            Periodo: últimas 24 horas · Eje X: fecha y hora UTC · Eje Y: W
+          </p>
         </div>
-        <div class="flex items-center gap-3 self-start sm:self-auto">
-          <span id="status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            <span class="w-2 h-2 rounded-full bg-slate-400 animate-pulse" id="status-dot"></span>
-            <span id="refresh-label">Cargando...</span>
-          </span>
+
+        <div class="text-sm text-slate-500 sm:text-right">
+          <p>Auto-refresco cada 60 s</p>
+          <p id="updatedText" class="font-medium text-slate-700">Sin actualizar todavía</p>
         </div>
       </div>
 
-      <!-- Contenedor Responsive del Gráfico -->
-      <div class="relative w-full h-[320px] sm:h-[400px]">
-        <canvas id="chartAerotermia"></canvas>
+      <div class="relative h-[420px]">
+        <canvas id="powerChart"></canvas>
       </div>
-    </div>
 
-    <!-- Enlace de regreso al Inicio -->
-    <div class="mt-8 text-center">
-      <a href="index.html" class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">
-        &larr; Volver a la página principal
-      </a>
-    </div>
-
+      <p class="text-xs text-slate-500 mt-4">
+        Si falta alguna medición, la línea se corta y queda un hueco.
+        La energía en kWh se estima integrando la potencia instantánea.
+        Los huecos de datos no se estiman.
+      </p>
+    </section>
   </main>
 
-  <!-- ================= PIE ================= -->
-  <footer class="bg-slate-900 text-slate-400 text-sm text-center py-8 mt-auto">
-    <p>© <span id="year"></span> Mi Página Web · Monitorización con Cloudflare Workers & D1</p>
+  <footer class="bg-slate-900 text-slate-400 text-sm text-center py-8 mt-10">
+    <p>© <span id="year"></span> Mi Página Web · Publicada con GitHub Pages</p>
   </footer>
 
   <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
+    const WORKER_BASE_URL = "https://worker-monitor-shelly-aerotermia.borkosmoreno.workers.dev";
+    const RANGE = "24h";
+    const CHANNEL = "0";
+    const REFRESH_MS = 60 * 1000;
+    const REQUEST_TIMEOUT_MS = 15 * 1000;
 
-    // =========================================================================
-    // CONFIGURACIÓN DEL WORKER
-    // =========================================================================
-    const WORKER_API_URL = "https://worker-monitor-shelly-aerotermia.borkosmoreno.workers.dev/api/aerotermia?horas=24";
-    const REFRESH_INTERVAL_SEC = 60; // Auto-refresco cada 60 segundos
-    const GAP_THRESHOLD_MS = 120000;  // > 2 minutos entre lecturas dibuja un hueco en la línea
+    let chart;
+    let lastSuccessfulRefresh = null;
+    let latestApiData = null;
 
-    let chartInstance = null;
-    let secondsSinceLastUpdate = 0;
-    let timerId = null;
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-    // Inicializar y configurar el gráfico de Chart.js
+    initChart();
+    loadData();
+
+    setInterval(loadData, REFRESH_MS);
+    setInterval(updateUpdatedAgo, 1000);
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        loadData();
+      }
+    });
+
     function initChart() {
-      const ctx = document.getElementById('chartAerotermia').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'line',
+      const ctx = document.getElementById("powerChart");
+
+      chart = new Chart(ctx, {
+        type: "line",
         data: {
-          labels: [],
-          datasets: [{
-            label: 'Aerotermia (W)',
-            data: [],
-            borderColor: '#4f46e5', // Indigo-600
-            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-            borderWidth: 2,
-            stepped: true,          // Línea escalonada
-            spanGaps: false,        // Deja hueco si el valor es null
-            pointRadius: 0,         // Sin marcadores de punto
-            pointHoverRadius: 5,    // Muestra punto solo con el ratón
-            fill: true,
-            tension: 0
-          }]
+          datasets: [
+            {
+              label: "Aerotermia (W)",
+              data: [],
+              parsing: false,
+              borderColor: "#4f46e5",
+              backgroundColor: "rgba(79, 70, 229, 0.08)",
+              borderWidth: 2,
+              fill: true,
+              stepped: "after",
+              pointRadius: 0,
+              pointHitRadius: 10,
+              spanGaps: false
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: false,
+          normalized: true,
           interaction: {
-            intersect: false,
-            mode: 'index'
+            mode: "nearest",
+            intersect: false
           },
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true
+            },
             tooltip: {
               callbacks: {
-                title: (items) => `Hora UTC: ${items[0].label}`,
-                label: (item) => `Potencia: ${item.raw !== null ? item.raw + ' W' : 'Sin dato'}`
+                title(items) {
+                  if (!items.length) return "";
+                  return formatUtcFull(items[0].parsed.x);
+                },
+                label(item) {
+                  if (item.parsed.y === null || item.parsed.y === undefined) {
+                    return "Sin dato";
+                  }
+
+                  return `Aerotermia: ${formatNumber(item.parsed.y, 0)} W`;
+                }
               }
             }
           },
           scales: {
             x: {
+              type: "linear",
               title: {
                 display: true,
-                text: 'Hora UTC',
-                font: { weight: 'bold', size: 12 },
-                color: '#64748b'
+                text: "Fecha y hora UTC"
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.25)"
               },
               ticks: {
-                maxTicksLimit: 12,
-                color: '#64748b',
-                font: { size: 11 }
-              },
-              grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 10,
+                callback(value) {
+                  return formatUtcTick(value);
+                }
+              }
             },
             y: {
-              beginAtZero: true,      // Mínimo en 0 W
+              min: 0,
               title: {
                 display: true,
-                text: 'Potencia (W)',
-                font: { weight: 'bold', size: 12 },
-                color: '#64748b'
+                text: "Potencia instantánea (W)"
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.25)"
               },
               ticks: {
-                color: '#64748b',
-                font: { size: 11 },
-                callback: (value) => value + ' W'
-              },
-              grid: { color: 'rgba(226, 232, 240, 0.8)' }
+                callback(value) {
+                  return `${formatNumber(value, 0)} W`;
+                }
+              }
             }
           }
         }
       });
     }
 
-    // Formatear Timestamp a cadena legible UTC (Ej: "26/07 18:30")
-    function formatUTC(timestamp) {
-      const d = new Date(timestamp);
-      const day = String(d.getUTCDate()).padStart(2, '0');
-      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const hours = String(d.getUTCHours()).padStart(2, '0');
-      const minutes = String(d.getUTCMinutes()).padStart(2, '0');
-      return `${day}/${month} ${hours}:${minutes}`;
-    }
-
-    // Actualizar estado del indicador superior derecho
-    function updateStatusUI(status, text) {
-      const badge = document.getElementById('status-badge');
-      const dot = document.getElementById('status-dot');
-      const label = document.getElementById('refresh-label');
-      label.textContent = text;
-
-      if (status === 'ok') {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
-        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-      } else if (status === 'error') {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200";
-        dot.className = "w-2 h-2 rounded-full bg-red-500";
-      } else {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600";
-        dot.className = "w-2 h-2 rounded-full bg-slate-400 animate-pulse";
-      }
-    }
-
-    // Consultar el Worker y procesar datos
-    async function fetchData() {
-      const alertBox = document.getElementById('alert-box');
-      alertBox.classList.add('hidden');
-      updateStatusUI('loading', 'Actualizando...');
+    async function loadData() {
+      setStatus(
+        "info",
+        "Actualizando datos...",
+        "Consultando el Worker de Cloudflare."
+      );
 
       try {
-        const response = await fetch(WORKER_API_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const res = await response.json();
-        if (!res.success || !res.data) throw new Error(res.error || 'Respuesta inválida');
+        const url = `${WORKER_BASE_URL}/api/series?range=${encodeURIComponent(RANGE)}&channel=${encodeURIComponent(CHANNEL)}`;
 
-        const records = res.data;
-        if (records.length === 0) {
-          throw new Error('No hay datos en las últimas 24 horas');
+        const response = await fetchWithTimeout(url, REQUEST_TIMEOUT_MS);
+
+        if (!response.ok) {
+          throw new Error(`El Worker respondió con HTTP ${response.status}.`);
         }
 
-        const labels = [];
-        const values = [];
-        let totalPower = 0;
-        let maxPower = 0;
-        let validPoints = 0;
-        let kwhSum = 0;
+        const data = await response.json();
 
-        for (let i = 0; i < records.length; i++) {
-          const row = records[i];
-          const pot = Math.max(0, row.aerotermia_w); // Evitar negativos accidentales
-          
-          // Detectar huecos > 2 minutos para cortar la línea escalonada
-          if (i > 0) {
-            const diff = row.timestamp - records[i - 1].timestamp;
-            if (diff > GAP_THRESHOLD_MS) {
-              labels.push(formatUTC(records[i - 1].timestamp + 60000));
-              values.push(null);
-            }
-          }
+        if (!data.success) {
+          throw new Error(data.error || "El Worker devolvió una respuesta no válida.");
+        }
 
-          labels.push(formatUTC(row.timestamp));
-          values.push(pot);
+        latestApiData = data;
 
-          // Cálculos para KPIs
-          totalPower += pot;
-          if (pot > maxPower) maxPower = pot;
-          validPoints++;
+        const rawPoints = parseApiPoints(data.points);
+        const chartPoints = buildChartPointsWithGaps(rawPoints, data.expectedIntervalMs || 60000);
 
-          // Calcular kWh midiendo el intervalo respecto a la lectura anterior (máx 2m)
-          if (i > 0) {
-            const dtMin = Math.min(2, (row.timestamp - records[i - 1].timestamp) / 60000);
-            kwhSum += (pot / 1000) * (dtMin / 60);
+        updateChart(chartPoints, data);
+        updateCards(rawPoints, data);
+
+        lastSuccessfulRefresh = new Date();
+        updateUpdatedAgo();
+
+        if (data.count === 0) {
+          if (data.latest) {
+            setStatus(
+              "warning",
+              "El Worker responde, pero no hay lecturas en las últimas 24 horas.",
+              `Última lectura registrada: ${formatUtcFull(data.latest.timestamp)}. Puede haber un problema con el Shelly, Shelly Cloud o el cron.`
+            );
           } else {
-            kwhSum += (pot / 1000) * (1 / 60); // Para la primera lectura asumimos 1 minuto
+            setStatus(
+              "warning",
+              "El Worker responde, pero la base de datos no tiene lecturas.",
+              "Comprueba que el cron del Worker está activo y que Shelly Cloud responde correctamente."
+            );
           }
+
+          return;
         }
 
-        const lastPot = values[values.length - 1] ?? 0;
-        const avgPot = validPoints > 0 ? Math.round(totalPower / validPoints) : 0;
+        if (data.stale && data.latest) {
+          setStatus(
+            "warning",
+            "El Worker responde, pero las lecturas no parecen recientes.",
+            `Última lectura: ${formatAge(data.latest.ageSeconds)}. Posible problema con Shelly, Shelly Cloud o el cron del Worker.`
+          );
 
-        // Mostrar KPIs en la pantalla
-        document.getElementById('kpi-actual').textContent = `${Math.round(lastPot)} W`;
-        document.getElementById('kpi-media').textContent = `${avgPot} W`;
-        document.getElementById('kpi-max').textContent = `${Math.round(maxPower)} W`;
-        document.getElementById('kpi-kwh').textContent = `${kwhSum.toFixed(2)} kWh`;
+          return;
+        }
 
-        // Refrescar el gráfico
-        chartInstance.data.labels = labels;
-        chartInstance.data.datasets[0].data = values;
-        chartInstance.update('none');
-
-        // Resetear el contador y actualizar la etiqueta
-        secondsSinceLastUpdate = 0;
-        updateStatusUI('ok', 'Actualizado hace 0 s');
-
-      } catch (err) {
-        console.error("❌ Error cargando datos:", err);
-        updateStatusUI('error', 'Error en actualización');
-        document.getElementById('alert-msg').textContent = err.message;
-        alertBox.classList.remove('hidden');
+        setStatus(
+          "success",
+          "Datos actualizados correctamente.",
+          `Se han recibido ${data.count} puntos para las últimas 24 horas.`
+        );
+      } catch (error) {
+        setStatus(
+          "error",
+          "No se ha podido actualizar el gráfico.",
+          `No se ha podido contactar correctamente con el Worker o la API ha fallado. Detalle: ${error.message}`
+        );
       }
     }
 
-    // Bucle del temporizador de refresco (60s)
-    function startAutoRefresh() {
-      if (timerId) clearInterval(timerId);
-      timerId = setInterval(() => {
-        secondsSinceLastUpdate++;
-        if (secondsSinceLastUpdate >= REFRESH_INTERVAL_SEC) {
-          fetchData();
-        } else {
-          const badge = document.getElementById('status-badge');
-          if (!badge.className.includes('red')) {
-            document.getElementById('refresh-label').textContent = `Actualizado hace ${secondsSinceLastUpdate} s`;
-          }
+    async function fetchWithTimeout(url, timeoutMs) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        return await fetch(url, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json"
+          },
+          signal: controller.signal
+        });
+      } catch (error) {
+        if (error.name === "AbortError") {
+          throw new Error("Tiempo de espera agotado al consultar el Worker.");
         }
-      }, 1000);
+
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
 
-    // Arrancar la aplicación al cargar el DOM
-    window.addEventListener('DOMContentLoaded', () => {
-      initChart();
-      fetchData();
-      startAutoRefresh();
-    });
+    function parseApiPoints(points) {
+      if (!Array.isArray(points)) {
+        return [];
+      }
+
+      return points
+        .map((point) => {
+          const x = Number(point[0]);
+          const y = Number(point[1]);
+
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return null;
+          }
+
+          return { x, y };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.x - b.x);
+    }
+
+    function buildChartPointsWithGaps(points, expectedIntervalMs) {
+      if (!points.length) {
+        return [];
+      }
+
+      const result = [];
+      const gapThresholdMs = expectedIntervalMs * 1.5;
+
+      for (let i = 0; i < points.length; i++) {
+        const current = points[i];
+
+        if (i > 0) {
+          const previous = points[i - 1];
+          const gapMs = current.x - previous.x;
+
+          if (gapMs > gapThresholdMs) {
+            result.push({
+              x: previous.x + expectedIntervalMs,
+              y: null
+            });
+          }
+        }
+
+        result.push(current);
+      }
+
+      return result;
+    }
+
+    function updateChart(points, data) {
+      chart.data.datasets[0].data = points;
+
+      if (Number.isFinite(data.fromMs) && Number.isFinite(data.toMs)) {
+        chart.options.scales.x.min = data.fromMs;
+        chart.options.scales.x.max = data.toMs;
+      }
+
+      chart.update();
+    }
+
+    function updateCards(points, data) {
+      const stats = calculateStats(points, data.expectedIntervalMs || 60000);
+
+      document.getElementById("currentPower").textContent =
+        stats.currentPower === null ? "—" : `${formatNumber(stats.currentPower, 0)} W`;
+
+      document.getElementById("averagePower").textContent =
+        stats.averagePower === null ? "—" : `${formatNumber(stats.averagePower, 0)} W`;
+
+      document.getElementById("maxPower").textContent =
+        stats.maxPower === null ? "—" : `${formatNumber(stats.maxPower, 0)} W`;
+
+      document.getElementById("energyKwh").textContent =
+        stats.energyKwh === null ? "—" : `${formatNumber(stats.energyKwh, 3)} kWh`;
+    }
+
+    function calculateStats(points, expectedIntervalMs) {
+      if (!points.length) {
+        return {
+          currentPower: null,
+          averagePower: null,
+          maxPower: null,
+          energyKwh: null
+        };
+      }
+
+      const values = points
+        .map((point) => point.y)
+        .filter((value) => Number.isFinite(value));
+
+      if (!values.length) {
+        return {
+          currentPower: null,
+          averagePower: null,
+          maxPower: null,
+          energyKwh: null
+        };
+      }
+
+      const currentPower = values[values.length - 1];
+      const averagePower = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const maxPower = Math.max(...values);
+
+      let energyKwh = 0;
+      const gapThresholdMs = expectedIntervalMs * 1.5;
+
+      for (let i = 1; i < points.length; i++) {
+        const previous = points[i - 1];
+        const current = points[i];
+
+        const deltaMs = current.x - previous.x;
+
+        if (
+          Number.isFinite(previous.y) &&
+          Number.isFinite(current.y) &&
+          deltaMs > 0 &&
+          deltaMs <= gapThresholdMs
+        ) {
+          energyKwh += previous.y * deltaMs / 3600000000;
+        }
+      }
+
+      return {
+        currentPower,
+        averagePower,
+        maxPower,
+        energyKwh
+      };
+    }
+
+    function setStatus(type, title, detail) {
+      const statusBox = document.getElementById("statusBox");
+      const statusTitle = document.getElementById("statusTitle");
+      const statusDetail = document.getElementById("statusDetail");
+
+      const classes = {
+        info: "rounded-xl border border-sky-200 bg-sky-50 text-sky-800 p-4 text-sm mb-6",
+        success: "rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 p-4 text-sm mb-6",
+        warning: "rounded-xl border border-amber-200 bg-amber-50 text-amber-900 p-4 text-sm mb-6",
+        error: "rounded-xl border border-red-200 bg-red-50 text-red-800 p-4 text-sm mb-6"
+      };
+
+      statusBox.className = classes[type] || classes.info;
+      statusTitle.textContent = title;
+      statusDetail.textContent = detail;
+    }
+
+    function updateUpdatedAgo() {
+      const updatedText = document.getElementById("updatedText");
+
+      if (!lastSuccessfulRefresh) {
+        updatedText.textContent = "Sin actualizar todavía";
+        return;
+      }
+
+      const seconds = Math.max(0, Math.round((Date.now() - lastSuccessfulRefresh.getTime()) / 1000));
+      updatedText.textContent = `Actualizado ${formatAge(seconds)}`;
+    }
+
+    function formatNumber(value, decimals) {
+      if (!Number.isFinite(Number(value))) {
+        return "—";
+      }
+
+      return new Intl.NumberFormat("es-ES", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(value);
+    }
+
+    function formatAge(seconds) {
+      if (!Number.isFinite(seconds)) {
+        return "hace un tiempo desconocido";
+      }
+
+      if (seconds < 60) {
+        return `hace ${seconds} s`;
+      }
+
+      const minutes = Math.floor(seconds / 60);
+
+      if (minutes < 60) {
+        return `hace ${minutes} min`;
+      }
+
+      const hours = Math.floor(minutes / 60);
+
+      if (hours < 24) {
+        return `hace ${hours} h`;
+      }
+
+      const days = Math.floor(hours / 24);
+      return `hace ${days} días`;
+    }
+
+    function formatUtcTick(timestampMs) {
+      return new Intl.DateTimeFormat("es-ES", {
+        timeZone: "UTC",
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(Number(timestampMs)));
+    }
+
+    function formatUtcFull(timestampMs) {
+      return new Intl.DateTimeFormat("es-ES", {
+        timeZone: "UTC",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).format(new Date(Number(timestampMs))) + " UTC";
+    }
   </script>
 </body>
 </html>
