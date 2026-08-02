@@ -1,0 +1,49 @@
+name: Deploy Eleventy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Configurar permisos mínimos para despliegues seguros en GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evitar despliegues simultáneos conflictivos
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependencias limpias
+        run: npm ci
+
+      - name: Compilar sitio estatico con Eleventy
+        run: npm run build
+
+      - name: Subir artefacto compilado
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Desplegar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

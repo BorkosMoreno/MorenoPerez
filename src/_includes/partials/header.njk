@@ -1,0 +1,29 @@
+<header class="sitio-header">
+  <div class="header-container">
+    <a href="/index.html#inicio" class="logo-enlace">
+      <span class="logo-texto">{{ site.shortName }}</span>
+    </a>
+    <nav class="nav-principal" aria-label="{{ ui.menuTitle }}">
+      <ul class="menu-lista">
+        {% for item in navegacion %}
+          <li class="menu-item">
+            {% if item.submenu %}
+              <details class="dropdown-proyectos">
+                <summary class="dropdown-trigger">{{ item.texto }}</summary>
+                <ul class="submenu-lista">
+                  {% for subitem in item.submenu %}
+                    <li>
+                      <a href="{{ subitem.url }}">{{ subitem.texto }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </details>
+            {% else %}
+              <a href="{{ item.url }}" class="menu-enlace">{{ item.texto }}</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</header>

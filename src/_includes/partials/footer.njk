@@ -1,0 +1,28 @@
+<footer class="sitio-footer">
+  <div class="footer-container">
+    <div class="footer-col">
+      <h3 class="footer-logo">{{ site.name }}</h3>
+      <p class="footer-fundacion">Desde {{ site.startYear }}</p>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <p class="footer-info">{{ redes.direccion }}</p>
+      <p class="footer-info">
+        <a href="mailto:{{ redes.email }}" class="footer-enlace">{{ redes.email }}</a>
+      </p>
+    </div>
+    <div class="footer-col">
+      <h4>Redes</h4>
+      <ul class="footer-redes">
+        {% for red in redes.social %}
+          <li>
+            <a href="{{ red.url }}" target="_blank" rel="noopener noreferrer" class="footer-enlace">{{ red.nombre }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; {% year %} {{ site.name }}. {{ ui.copyright }}</p>
+  </div>
+</footer>

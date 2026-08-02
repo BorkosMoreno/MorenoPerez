@@ -1,0 +1,42 @@
+[
+  {
+    "id": "enlaces-de-interes",
+    "nombre": "Enlaces de Interés",
+    "descripcion": "Recopilación estructurada de enlaces web y recursos de uso diario.",
+    "url": "/proyectos/enlaces-de-interes/enlaces-de-interes-originales.html",
+    "externo": false,
+    "categoria": "Utilidades"
+  },
+  {
+    "id": "monitores-electricos",
+    "nombre": "Monitores Eléctricos",
+    "descripcion": "Gráficos interactivos de consumo eléctrico y tarifas con Shelly BIP30.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
+    "id": "apuntes",
+    "nombre": "Apuntes Técnicos",
+    "descripcion": "Base de conocimiento personal, comandos útiles y guías rápidas.",
+    "url": "/proyectos/notas/apuntes.html",
+    "externo": false,
+    "categoria": "Documentación"
+  },
+  {
+    "id": "notas",
+    "nombre": "Notas Rápidas",
+    "descripcion": "Espacio de notas dinámicas y borradores de trabajo temporales.",
+    "url": "/proyectos/notas/notas.html",
+    "externo": false,
+    "categoria": "Documentación"
+  },
+  {
+    "id": "programacion",
+    "nombre": "Entornos de Programación",
+    "descripcion": "Configuraciones y buenas prácticas para la puesta a punto de entornos de desarrollo.",
+    "url": "/proyectos/programacion/entorno-de-programacion.html",
+    "externo": false,
+    "categoria": "Desarrollo"
+  }
+]

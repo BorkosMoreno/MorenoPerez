@@ -1,0 +1,12 @@
+{
+  "email": "contacto@morenoperez.es",
+  "telefono": "+34 600 000 000",
+  "direccion": "Madrid, España",
+  "social": [
+    {
+      "nombre": "GitHub",
+      "url": "https://github.com/BorkosMoreno",
+      "icono": "github"
+    }
+  ]
+}

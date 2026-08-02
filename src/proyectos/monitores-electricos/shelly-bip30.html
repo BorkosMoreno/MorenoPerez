@@ -1,0 +1,43 @@
+---
+layout: layouts/proyecto.njk
+title: Monitores Eléctricos (Shelly BIP30)
+description: Análisis de consumo eléctrico doméstico y costes asociados obtenidos mediante el monitor Shelly.
+categoria: Domótica
+---
+
+<p>Datos de consumo acumulados e instantáneos de la vivienda. Los gráficos se generan dinámicamente utilizando la librería Chart.js a partir de datos estructurados.</p>
+
+<!-- Contenedor para el gráfico de prueba -->
+<div class="tarjeta" style="margin: 2rem 0; max-width: 800px;">
+  <canvas id="graficoConsumo" width="400" height="200" aria-label="Gráfico de consumo eléctrico" role="img"></canvas>
+</div>
+
+<!-- Carga de Chart.js únicamente en esta página -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('graficoConsumo').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+        datasets: [{
+          label: 'Consumo Diario (kWh)',
+          data: [12.5, 14.2, 11.8, 15.1, 10.3, 8.5, 9.1],
+          backgroundColor: 'rgba(30, 58, 138, 0.7)',
+          borderColor: 'rgba(30, 58, 138, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  });
+</script>

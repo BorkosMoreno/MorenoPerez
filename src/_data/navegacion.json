@@ -1,0 +1,17 @@
+[
+  { "texto": "Inicio", "url": "/#inicio" },
+  { "texto": "Miembros", "url": "/#miembros" },
+  {
+    "texto": "Proyectos",
+    "url": "#",
+    "submenu": [
+      { "texto": "Enlaces de Interés", "url": "/proyectos/enlaces-de-interes/enlaces-de-interes-originales.html" },
+      { "texto": "Monitores Eléctricos", "url": "/proyectos/monitores-electricos/shelly-bip30.html" },
+      { "texto": "Apuntes", "url": "/proyectos/notas/apuntes.html" },
+      { "texto": "Notas", "url": "/proyectos/notas/notas.html" },
+      { "texto": "Programación", "url": "/proyectos/programacion/entorno-de-programacion.html" }
+    ]
+  },
+  { "texto": "Galería", "url": "/#galeria" },
+  { "texto": "Contacto", "url": "/#contacto" }
+]

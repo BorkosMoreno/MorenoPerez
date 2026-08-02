@@ -1,0 +1,60 @@
+[
+  {
+    "id": "jose-carlos",
+    "nombre": "Jose Carlos",
+    "rol": "Padre",
+    "nacimiento": "1970",
+    "descripcion": "Ingeniero y aficionado a la tecnología, la automatización y la programación.",
+    "foto": "/fotografias/miembros/jose-carlos.webp",
+    "contacto": "josecarlos@morenoperez.es",
+    "redes": {
+      "github": "https://github.com/BorkosMoreno"
+    },
+    "arbol": {
+      "padre": "Abuelo Paterno",
+      "madre": "Abuela Paterna"
+    }
+  },
+  {
+    "id": "cristina",
+    "nombre": "Cristina",
+    "rol": "Madre",
+    "nacimiento": "1972",
+    "descripcion": "Apasionada de la lectura, el senderismo y la gestión organizativa familiar.",
+    "foto": "/fotografias/miembros/cristina.webp",
+    "contacto": "cristina@morenoperez.es",
+    "redes": {},
+    "arbol": {
+      "padre": "Abuelo Materno",
+      "madre": "Abuela Materna"
+    }
+  },
+  {
+    "id": "gonzalo",
+    "nombre": "Gonzalo",
+    "rol": "Hijo",
+    "nacimiento": "2000",
+    "descripcion": "Estudiante enfocado en el desarrollo académico y la actividad deportiva.",
+    "foto": "/fotografias/miembros/gonzalo.webp",
+    "contacto": "gonzalo@morenoperez.es",
+    "redes": {},
+    "arbol": {
+      "padre": "Jose Carlos",
+      "madre": "Cristina"
+    }
+  },
+  {
+    "id": "diego",
+    "nombre": "Diego",
+    "rol": "Hijo",
+    "nacimiento": "2004",
+    "descripcion": "Estudiante entusiasta de las tecnologías digitales y los videojuegos.",
+    "foto": "/fotografias/miembros/diego.webp",
+    "contacto": "diego@morenoperez.es",
+    "redes": {},
+    "arbol": {
+      "padre": "Jose Carlos",
+      "madre": "Cristina"
+    }
+  }
+]

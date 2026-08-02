@@ -1,0 +1,29 @@
+---
+layout: layouts/proyecto.njk
+title: Apuntes Técnicos
+description: Archivo personal de apuntes rápidos, chuletas de comandos y configuraciones de sistemas.
+categoria: Documentación
+---
+
+<h2>Comandos Rápidos de Git</h2>
+<p>Recordatorio de comandos esenciales para la gestión del repositorio local:</p>
+
+<pre style="background: var(--gris-claro); padding: 1rem; border-radius: 6px; border: 1px solid var(--gris-borde); overflow-x: auto; margin: 1rem 0;">
+<code># Comprobar estado del repositorio
+git status
+
+# Añadir todos los cambios
+git add .
+
+# Crear un commit con mensaje descriptivo
+git commit -m "Mensaje descriptivo de los cambios"
+
+# Enviar cambios a la rama principal en GitHub
+git push origin main</code>
+</pre>
+
+<h2>PowerShell Bypass</h2>
+<p>Para ejecutar scripts locales temporalmente omitiendo restricciones de firma:</p>
+<pre style="background: var(--gris-claro); padding: 1rem; border-radius: 6px; border: 1px solid var(--gris-borde); overflow-x: auto; margin: 1rem 0;">
+<code>Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force</code>
+</pre>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="{{ site.language }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if title %}{{ title }} | {% endif %}{{ site.name }}</title>
+  <meta name="description" content="{% if description %}{{ description }}{% else %}{{ site.description }}{% endif %}">
+  
+  <!-- Canonical dinámico (Requisito SEO) -->
+  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+
+  <!-- Favicons estándar de tu estructura -->
+  <link rel="icon" href="/assets/favicons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/favicons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- Open Graph / Redes Sociales -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+  <meta property="og:title" content="{% if title %}{{ title }}{% else %}{{ site.name }}{% endif %}">
+  <meta property="og:description" content="{% if description %}{{ description }}{% else %}{{ site.description }}{% endif %}">
+  <meta property="og:image" content="{{ site.url }}{% if ogImage %}{{ ogImage }}{% else %}{{ site.defaultOgImage }}{% endif %}">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% if title %}{{ title }}{% else %}{{ site.name }}{% endif %}">
+  <meta name="twitter:description" content="{% if description %}{{ description }}{% else %}{{ site.description }}{% endif %}">
+
+  <!-- CSS Único Vanilla (Cero frameworks) -->
+  <link rel="stylesheet" href="/assets/css/estilos.css">
+</head>
+<body>
+
+  <!-- Cabecera global fija -->
+  {% include "partials/header.njk" %}
+
+  <!-- Contenedor principal de contenido -->
+  <main id="contenido-principal" class="desplazamiento-header">
+    {{ content | safe }}
+  </main>
+
+  <!-- Pie de página global -->
+  {% include "partials/footer.njk" %}
+
+</body>
+</html>

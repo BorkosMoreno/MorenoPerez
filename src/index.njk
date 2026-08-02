@@ -1,0 +1,190 @@
+---
+layout: layouts/home.njk
+title: Portal Familiar
+description: Sitio web oficial de la Familia Moreno Pérez. Conoce a nuestros miembros, proyectos activos y celebraciones.
+---
+
+<!-- SECCIÓN 1: INICIO (HERO) -->
+<section id="inicio" class="hero-seccion">
+  <div class="container hero-grid">
+    <h1 class="hero-titulo">{{ site.name }}</h1>
+    <div class="hero-foto-wrapper">
+      <!-- Foto de cabecera familiar (Reemplazar ruta por tu imagen WebP final cuando exista) -->
+      <img src="/fotografias/albumes/familiar-portada.webp" alt="Fotografía destacada de la Familia Moreno Pérez" class="hero-foto">
+    </div>
+    <p class="hero-bienvenida">Bienvenidos a nuestro portal personal. Espacio digital de encuentro familiar, gestión de proyectos personales y archivo histórico desde el año {{ site.startYear }}.</p>
+  </div>
+</section>
+
+<!-- SECCIÓN 2: PROYECTOS -->
+<section id="proyectos" class="proyectos-seccion">
+  <div class="container">
+    <h2 class="seccion-titulo">Nuestros Proyectos</h2>
+    <div class="grid-tarjetas">
+      {% for proyecto in proyectos %}
+        <article class="tarjeta">
+          <span class="miembro-rol">{{ proyecto.categoria }}</span>
+          <h3 style="margin: 0.5rem 0; color: var(--primario);">{{ proyecto.nombre }}</h3>
+          <p style="font-size: 0.95rem; margin-bottom: 1rem;">{{ proyecto.descripcion }}</p>
+          <a href="{{ proyecto.url }}" class="menu-enlace" style="display: inline-block; padding: 0.25rem 0; color: var(--primario-claro);">
+            {{ ui.viewProject }} ?
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 3: MIEMBROS DE LA FAMILIA -->
+<section id="miembros" class="miembros-seccion">
+  <div class="container">
+    <h2 class="seccion-titulo">Miembros de la Familia</h2>
+    <div class="grid-tarjetas">
+      {% for miembro in miembros %}
+        <article class="tarjeta">
+          <div class="miembro-cabecera">
+            <!-- Avatar WebP con fallback de carga -->
+            <img src="{{ miembro.foto }}" alt="Fotografía de {{ miembro.nombre }}" class="miembro-avatar">
+            <div>
+              <h3 style="color: var(--primario);">{{ miembro.nombre }}</h3>
+              <span class="miembro-rol">{{ miembro.rol }}</span>
+            </div>
+          </div>
+          <p style="font-size: 0.95rem;">{{ miembro.descripcion }}</p>
+          <div class="miembro-arbol">
+            <span style="font-weight: bold; color: var(--secundario);">Progenitores:</span> 
+            {{ miembro.arbol.padre }} y {{ miembro.arbol.madre }}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <!-- Árbol Genealógico Simplificado (Requisito 3) -->
+    <div class="arbol-contenedor">
+      <h3 class="arbol-titulo">Árbol Genealógico Simplificado</h3>
+      <div class="arbol-diagrama">
+        <!-- Nivel 1: Abuelos (Representación estricta y segura) -->
+        <div class="arbol-nivel">
+          <div class="arbol-nodo">
+            <div class="nodo-rol">Abuelos Paternos</div>
+            <div>Rama Moreno</div>
+          </div>
+          <div class="arbol-nodo">
+            <div class="nodo-rol">Abuelos Maternos</div>
+            <div>Rama Pérez</div>
+          </div>
+        </div>
+        <!-- Nivel 2: Padres -->
+        <div class="arbol-nivel">
+          <div class="arbol-nodo" style="background-color: var(--gris-borde);">
+            <div class="nodo-rol">Padre</div>
+            <div>Jose Carlos</div>
+          </div>
+          <div class="arbol-nodo" style="background-color: var(--gris-borde);">
+            <div class="nodo-rol">Madre</div>
+            <div>Cristina</div>
+          </div>
+        </div>
+        <!-- Nivel 3: Hijos -->
+        <div class="arbol-nivel">
+          <div class="arbol-nodo">
+            <div class="nodo-rol">Hijo</div>
+            <div>Gonzalo</div>
+          </div>
+          <div class="arbol-nodo">
+            <div class="nodo-rol">Hijo</div>
+            <div>Diego</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 4: GALERÍA DE FOTOS (Placeholder dinámico) -->
+<section id="galeria" class="galeria-seccion">
+  <div class="container">
+    <h2 class="seccion-titulo">Galería de Momentos</h2>
+    <div class="galeria-grid">
+      <!-- Placeholders de tus primeras fotografías de prueba (IMG_2026...) -->
+      <div class="galeria-item">
+        <img src="/fotografias/albumes/vacaciones-2026.webp" alt="Foto familiar de vacaciones" class="galeria-img">
+      </div>
+      <div class="galeria-item">
+        <img src="/fotografias/albumes/navidad-2026.webp" alt="Celebración Navidades" class="galeria-img">
+      </div>
+      <div class="galeria-item">
+        <img src="/fotografias/albumes/cumpleanos-2026.webp" alt="Reunión familiar de cumpleaños" class="galeria-img">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 5: EVENTOS Y CELEBRACIONES -->
+<section id="eventos" class="eventos-seccion" style="background-color: var(--gris-claro);">
+  <div class="container">
+    <h2 class="seccion-titulo">Calendario y Celebraciones</h2>
+    <div class="grid-tarjetas">
+      {% for evento in eventos %}
+        <article class="tarjeta" style="border-left: 4px solid var(--accent);">
+          <span class="noticia-fecha">{{ evento.fecha }}</span>
+          <h3 style="color: var(--primario); margin: 0.25rem 0;">{{ evento.nombre }}</h3>
+          <p style="font-size: 0.95rem;">{{ evento.descripcion }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 6: NOTICIAS Y BLOG FAMILIAR -->
+<section id="noticias" class="noticias-seccion" style="background-color: var(--blanco);">
+  <div class="container">
+    <h2 class="seccion-titulo">Historias y Noticias</h2>
+    <div class="grid-tarjetas">
+      <article class="tarjeta">
+        <span class="noticia-fecha">Receta Tradicional</span>
+        <h3 style="color: var(--primario); margin: 0.5rem 0;">Tarta Familiar de la Abuela</h3>
+        <p style="font-size: 0.95rem;">La receta de repostería secreta que pasa de generación en generación en nuestras reuniones.</p>
+      </article>
+      <article class="tarjeta">
+        <span class="noticia-fecha">Anécdota</span>
+        <h3 style="color: var(--primario); margin: 0.5rem 0;">Aquel verano de 1996</h3>
+        <p style="font-size: 0.95rem;">Memorias e historias divertidas del inicio de nuestra andadura como familia unida.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 10: CONTACTO -->
+<section id="contacto" class="contacto-seccion" style="background-color: var(--gris-claro);">
+  <div class="container">
+    <h2 class="seccion-titulo">Contacto Familiar</h2>
+    <div class="contacto-grid">
+      <div>
+        <ul class="info-lista">
+          <li class="info-item">
+            <span class="info-label">Email Principal</span>
+            <a href="mailto:{{ redes.email }}" style="color: var(--primario-claro); font-weight: bold; text-decoration: none;">{{ redes.email }}</a>
+          </li>
+          <li class="info-item">
+            <span class="info-label">Ubicación</span>
+            <span>{{ redes.direccion }}</span>
+          </li>
+          <li class="info-item">
+            <span class="info-label">Búsqueda</span>
+            <span style="font-size: 0.9rem; color: var(--secundario);">Utiliza la combinación <kbd style="background: var(--gris-borde); padding: 0.1rem 0.3rem; border-radius: 4px; font-weight: bold;">Ctrl + F</kbd> para buscar palabras en la página activa.</span>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <!-- Mapa estático seguro sin geolocalización sensible directa (Requisito de privacidad) -->
+        <div class="mapa-estatico-placeholder">
+          <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--primario);">Ubicación General</strong>
+            <span>La familia reside en la Comunidad de Madrid, España. Mapa desactivado para proteger nuestra privacidad.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

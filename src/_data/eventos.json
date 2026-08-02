@@ -1,0 +1,14 @@
+[
+  {
+    "fecha": "11-06",
+    "nombre": "Aniversario de Bodas",
+    "tipo": "Aniversario",
+    "descripcion": "Fundación de la familia Moreno Pérez en 1996."
+  },
+  {
+    "fecha": "12-24",
+    "nombre": "Nochebuena",
+    "tipo": "Celebración",
+    "descripcion": "Reunión anual de toda la familia."
+  }
+]

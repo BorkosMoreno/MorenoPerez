@@ -1,0 +1,12 @@
+{
+  "name": "Familia Moreno Pérez",
+  "shortName": "MorenoPerez",
+  "url": "https://morenoperez.es",
+  "language": "es",
+  "author": "BorkosMoreno",
+  "startYear": "1996",
+  "description": "Sitio web oficial de la Familia Moreno Pérez",
+  "repoUrl": "https://github.com/BorkosMoreno/MorenoPerez",
+  "defaultOgImage": "/assets/imagenes/og/default-og.webp",
+  "keywords": ["Moreno Pérez", "Familia", "Proyectos", "Monitores Eléctricos", "Apuntes"]
+}

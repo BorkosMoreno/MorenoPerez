@@ -1,0 +1,16 @@
+{
+  "name": "morenoperez-es",
+  "version": "1.0.0",
+  "description": "Portal familiar Moreno Perez",
+  "type": "module",
+  "scripts": {
+    "start": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "keywords": [],
+  "author": "BorkosMoreno",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.6"
+  }
+}
