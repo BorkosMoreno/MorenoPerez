@@ -1,6 +1,7 @@
 node_modules/
 _site/
 .env
+kk/
 *.log
 .DS_Store
 Thumbs.db
