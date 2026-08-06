@@ -1,43 +1,423 @@
 ---
 layout: layouts/proyecto.njk
-title: Monitores Eléctricos (Shelly BIP30)
-description: Análisis de consumo eléctrico doméstico y costes asociados obtenidos mediante el monitor Shelly.
+title: Monitor Eléctrico Shelly EM
+description: Consumo instantáneo y acumulado de aerotermia y vivienda completa. Datos en tiempo real desde Cloudflare D1.
 categoria: Domótica
 ---
 
-<p>Datos de consumo acumulados e instantáneos de la vivienda. Los gráficos se generan dinámicamente utilizando la librería Chart.js a partir de datos estructurados.</p>
-
-<!-- Contenedor para el gráfico de prueba -->
-<div class="tarjeta" style="margin: 2rem 0; max-width: 800px;">
-  <canvas id="graficoConsumo" width="400" height="200" aria-label="Gráfico de consumo eléctrico" role="img"></canvas>
+<!-- ==========================================================================
+     CONTROLES Y ESTADO
+     ========================================================================== -->
+<div class="monitor-controles">
+  <div class="ctrl-grupo">
+    <button id="btnHoy" class="btn-ctrl activo">📡 En vivo (24h)</button>
+    <button id="btnAnterior" class="btn-ctrl" title="Día anterior">◀</button>
+    <input type="date" id="selectorFecha" class="input-fecha">
+    <button id="btnSiguiente" class="btn-ctrl" title="Día siguiente">▶</button>
+  </div>
+  <div class="ctrl-grupo">
+    <button id="btnTz" class="btn-ctrl">🕒 UTC</button>
+    <button id="btnExportar" class="btn-ctrl">📥 CSV</button>
+  </div>
 </div>
 
-<!-- Carga de Chart.js únicamente en esta página -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+<div id="estadoSistema" class="estado-barra estado-ok">
+  <span id="estadoTexto">Conectando con el Worker...</span>
+  <span id="estadoRefresco" class="estado-refresco"></span>
+</div>
 
+<!-- ==========================================================================
+     TARJETAS DE RESUMEN
+     ========================================================================== -->
+<div class="monitor-tarjetas-grid">
+  <!-- Tarjeta A: Situación Actual -->
+  <div class="tarjeta monitor-tarjeta" id="tarjetaActual">
+    <h3 class="tarjeta-titulo">⚡ Situación Actual</h3>
+    <div class="valor-fila"><span class="etiqueta aero">Aerotermia:</span> <span id="valActAero" class="valor">-- W</span></div>
+    <div class="valor-fila"><span class="etiqueta casa">Casa Total:</span> <span id="valActCasa" class="valor">-- W</span></div>
+    <div class="valor-fila"><span class="etiqueta diff">Resto Vivienda:</span> <span id="valActDiff" class="valor">-- W</span></div>
+    <p class="tarjeta-meta">Última lectura: <span id="metaUltimaLectura">--</span></p>
+  </div>
+
+  <!-- Tarjeta B: Estadísticas del Periodo -->
+  <div class="tarjeta monitor-tarjeta" id="tarjetaStats">
+    <h3 class="tarjeta-titulo">📊 Estadísticas del Periodo</h3>
+    <table class="stats-tabla">
+      <thead>
+        <tr><th>Canal</th><th>Mín (W)</th><th>Máx (W)</th><th>Media (W)</th><th>Energía (kWh)</th></tr>
+      </thead>
+      <tbody id="statsCuerpo">
+        <tr><td class="aero">Aerotermia</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td class="casa">Casa Total</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td class="diff">Resto</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     GRÁFICO
+     ========================================================================== -->
+<div class="tarjeta monitor-grafico-wrapper">
+  <canvas id="chartConsumo" aria-label="Gráfico de consumo eléctrico" role="img"></canvas>
+</div>
+
+<!-- ==========================================================================
+     ESTILOS ESPECÍFICOS (Reutiliza variables :root de estilos.css)
+     ========================================================================== -->
+<style>
+  .monitor-controles {
+    display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between;
+    margin: 1.5rem 0 1rem; align-items: center;
+  }
+  .ctrl-grupo { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .btn-ctrl {
+    background: var(--gris-claro); border: 1px solid var(--gris-borde);
+    padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+    transition: all 0.2s; color: var(--secundario);
+  }
+  .btn-ctrl:hover { background: #e2e8f0; }
+  .btn-ctrl.activo { background: var(--primario); color: #fff; border-color: var(--primario); }
+  .input-fecha {
+    padding: 0.4rem; border: 1px solid var(--gris-borde); border-radius: 6px;
+    font-family: inherit; font-size: 0.9rem;
+  }
+
+  .estado-barra {
+    padding: 0.6rem 1rem; border-radius: 6px; margin-bottom: 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.9rem; border: 1px solid var(--gris-borde);
+  }
+  .estado-ok { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+  .estado-aviso { background: #fefce8; color: #854d0e; border-color: #fde047; }
+  .estado-error { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+  .estado-refresco { font-size: 0.8rem; opacity: 0.8; }
+
+  .monitor-tarjetas-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .monitor-tarjeta .tarjeta-titulo { font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primario); }
+  .valor-fila { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px dashed var(--gris-borde); }
+  .valor-fila:last-of-type { border-bottom: none; }
+  .etiqueta { font-weight: 600; }
+  .valor { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .aero { color: #16a34a; } .casa { color: #dc2626; } .diff { color: #2563eb; }
+  .tarjeta-meta { margin-top: 0.75rem; font-size: 0.85rem; color: #64748b; }
+
+  .stats-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .stats-tabla th, .stats-tabla td { padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--gris-borde); }
+  .stats-tabla th:first-child, .stats-tabla td:first-child { text-align: left; }
+  .stats-tabla th { background: var(--gris-claro); font-weight: 600; }
+
+  .monitor-grafico-wrapper { position: relative; min-height: 400px; }
+  @media (max-width: 768px) {
+    .monitor-controles { flex-direction: column; align-items: stretch; }
+    .ctrl-grupo { justify-content: center; }
+    .monitor-tarjetas-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- ==========================================================================
+     DEPENDENCIAS CDN (Chart.js 4 + adapter + zoom)
+     ========================================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js" crossorigin="anonymous"></script>
+
+<!-- ==========================================================================
+     LÓGICA PRINCIPAL
+     ========================================================================== -->
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const ctx = document.getElementById('graficoConsumo').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-        datasets: [{
-          label: 'Consumo Diario (kWh)',
-          data: [12.5, 14.2, 11.8, 15.1, 10.3, 8.5, 9.1],
-          backgroundColor: 'rgba(30, 58, 138, 0.7)',
-          borderColor: 'rgba(30, 58, 138, 1)',
-          borderWidth: 1
-        }]
-      },
+document.addEventListener("DOMContentLoaded", () => {
+  // ── CONFIGURACIÓN ──────────────────────────────────────────────────────────
+  const WORKER_BASE = "https://worker-monitor-shelly-aerotermia.borkosmoreno.workers.dev";
+  const REFRESH_INTERVAL_MS = 300 * 1000; // 5 minutos
+  const GAP_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutos
+  const STALE_WARN_SEC = 3 * 60;
+  const STALE_ERR_SEC = 15 * 60;
+
+  // ── ESTADO ─────────────────────────────────────────────────────────────────
+  let modo = "live"; // "live" | "day"
+  let fechaSeleccionada = null; // Date objeto para modo "day"
+  let tzMode = "UTC"; // "UTC" | "local"
+  let lastTimestamp = 0;
+  let refreshTimer = null;
+  let datosUnificados = []; // [{ts, aero, casa, diff, aero_wh, casa_wh}]
+  let chart = null;
+
+  // ── ELEMENTOS DOM ──────────────────────────────────────────────────────────
+  const elBtnHoy = document.getElementById("btnHoy");
+  const elBtnAnt = document.getElementById("btnAnterior");
+  const elBtnSig = document.getElementById("btnSiguiente");
+  const elFecha = document.getElementById("selectorFecha");
+  const elBtnTz = document.getElementById("btnTz");
+  const elBtnCsv = document.getElementById("btnExportar");
+  const elEstadoBar = document.getElementById("estadoSistema");
+  const elEstadoTxt = document.getElementById("estadoTexto");
+  const elEstadoRef = document.getElementById("estadoRefresco");
+
+  // ── UTILIDADES ─────────────────────────────────────────────────────────────
+  const fmtNum = (n, d = 1) => (n === null || n === undefined || !Number.isFinite(n)) ? "--" : n.toFixed(d);
+  const fmtHora = (ts) => {
+    const d = new Date(ts);
+    if (tzMode === "UTC") return d.toISOString().slice(11, 16) + " UTC";
+    return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  };
+  const fmtFechaHora = (ts) => {
+    const d = new Date(ts);
+    if (tzMode === "UTC") return d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+    return d.toLocaleString("es-ES", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  };
+  const startOfDayUTC = (d) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const endOfDayUTC = (d) => startOfDayUTC(d) + 86400000 - 1;
+
+  // ── FETCH DE DATOS ─────────────────────────────────────────────────────────
+  async function fetchCanal(startMs, endMs, channel) {
+    const url = `${WORKER_BASE}/api/datos?start=${new Date(startMs).toISOString()}&end=${new Date(endMs).toISOString()}&channel=${channel}&bucket=raw`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || "Error en respuesta del Worker");
+    return { points: json.points || [], data: json.data || [], latest: json.latest };
+  }
+
+  async function cargarDatos(incremental = false) {
+    try {
+      let startMs, endMs;
+      const now = Date.now();
+
+      if (modo === "live") {
+        endMs = now;
+        startMs = incremental ? lastTimestamp : now - 24 * 3600000;
+      } else {
+        startMs = startOfDayUTC(fechaSeleccionada);
+        endMs = endOfDayUTC(fechaSeleccionada);
+      }
+
+      const [res0, res1] = await Promise.all([
+        fetchCanal(startMs, endMs, 0),
+        fetchCanal(startMs, endMs, 1)
+      ]);
+
+      // Actualizar estado del sistema
+      actualizarEstado(res0.latest);
+
+      // Fusionar canales
+      const mapAero = new Map(res0.points.map(p => [p[0], p[1]]));
+      const mapCasa = new Map(res1.points.map(p => [p[0], p[1]]));
+      const mapAeroWh = new Map((res0.data || []).map(d => [d.timestamp, d.total_wh]));
+      const mapCasaWh = new Map((res1.data || []).map(d => [d.timestamp, d.total_wh]));
+
+      const todosTs = new Set([...mapAero.keys(), ...mapCasa.keys()]);
+      const nuevos = [];
+      for (const ts of todosTs) {
+        if (incremental && ts <= lastTimestamp) continue;
+        const a = mapAero.get(ts) ?? null;
+        const c = mapCasa.get(ts) ?? null;
+        const d = (a !== null && c !== null) ? c - a : null;
+        nuevos.push({ ts, aero: a, casa: c, diff: d, aero_wh: mapAeroWh.get(ts), casa_wh: mapCasaWh.get(ts) });
+      }
+
+      if (nuevos.length > 0) {
+        datosUnificados = incremental ? [...datosUnificados, ...nuevos] : nuevos;
+        datosUnificados.sort((a, b) => a.ts - b.ts);
+        inyectarGaps();
+        lastTimestamp = datosUnificados[datosUnificados.length - 1].ts;
+      }
+
+      actualizarUI();
+    } catch (err) {
+      console.error("[Monitor] Error cargando datos:", err);
+      elEstadoBar.className = "estado-barra estado-error";
+      elEstadoTxt.textContent = err.message.includes("fetch") ? "El Worker no responde." : `Error: ${err.message}`;
+    }
+  }
+
+  // ── GESTIÓN DE GAPS ────────────────────────────────────────────────────────
+  function inyectarGaps() {
+    if (datosUnificados.length < 2) return;
+    const resultado = [datosUnificados[0]];
+    for (let i = 1; i < datosUnificados.length; i++) {
+      const prev = datosUnificados[i - 1];
+      const curr = datosUnificados[i];
+      if (curr.ts - prev.ts > GAP_THRESHOLD_MS) {
+        resultado.push({ ts: prev.ts + 60000, aero: null, casa: null, diff: null, aero_wh: null, casa_wh: null });
+      }
+      resultado.push(curr);
+    }
+    datosUnificados = resultado;
+  }
+
+  // ── ACTUALIZAR UI ──────────────────────────────────────────────────────────
+  function actualizarUI() {
+    if (datosUnificados.length === 0) {
+      elEstadoTxt.textContent = "No hay datos para este periodo.";
+      return;
+    }
+    actualizarTarjetas();
+    actualizarGrafico();
+  }
+
+  function actualizarTarjetas() {
+    const validos = datosUnificados.filter(d => d.aero !== null || d.casa !== null);
+    if (validos.length === 0) return;
+
+    const ultimo = validos[validos.length - 1];
+    document.getElementById("valActAero").textContent = fmtNum(ultimo.aero) + " W";
+    document.getElementById("valActCasa").textContent = fmtNum(ultimo.casa) + " W";
+    document.getElementById("valActDiff").textContent = fmtNum(ultimo.diff) + " W";
+    document.getElementById("metaUltimaLectura").textContent = fmtFechaHora(ultimo.ts);
+
+    // Estadísticas
+    const calcStats = (key) => {
+      const vals = validos.map(d => d[key]).filter(v => v !== null);
+      if (vals.length === 0) return { min: "--", max: "--", mean: "--", minTs: "", maxTs: "" };
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const minTs = validos.find(d => d[key] === min)?.ts || "";
+      const maxTs = validos.find(d => d[key] === max)?.ts || "";
+      return { min: fmtNum(min), max: fmtNum(max), mean: fmtNum(mean), minTs, maxTs };
+    };
+
+    const calcKwh = (whKey) => {
+      const whVals = validos.map(d => d[whKey]).filter(v => Number.isFinite(v));
+      if (whVals.length < 2) return "--";
+      const kwh = (whVals[whVals.length - 1] - whVals[0]) / 1000;
+      return kwh < 0 ? "⚠️ No fiable" : fmtNum(kwh, 2);
+    };
+
+    const sA = calcStats("aero"), sC = calcStats("casa"), sD = calcStats("diff");
+    const kA = calcKwh("aero_wh"), kC = calcKwh("casa_wh");
+    const kD = (kA !== "--" && kC !== "--" && !kA.includes("⚠") && !kC.includes("⚠"))
+      ? fmtNum(parseFloat(kC) - parseFloat(kA), 2) : "--";
+
+    const filas = document.querySelectorAll("#statsCuerpo tr");
+    const setFila = (tr, s, k) => {
+      tr.cells[1].textContent = s.min; tr.cells[1].title = s.minTs ? `A las ${fmtHora(s.minTs)}` : "";
+      tr.cells[2].textContent = s.max; tr.cells[2].title = s.maxTs ? `A las ${fmtHora(s.maxTs)}` : "";
+      tr.cells[3].textContent = s.mean;
+      tr.cells[4].textContent = k;
+    };
+    setFila(filas[0], sA, kA);
+    setFila(filas[1], sC, kC);
+    setFila(filas[2], sD, kD);
+  }
+
+  function actualizarGrafico() {
+    const ds = (label, color, key) => ({
+      label, data: datosUnificados.map(d => ({ x: d.ts, y: d[key] })),
+      borderColor: color, backgroundColor: color, borderWidth: 2,
+      pointRadius: 0, stepped: true, fill: false, tension: 0
+    });
+
+    const config = {
+      type: "line",
+      data: { datasets: [ds("Aerotermia", "#16a34a", "aero"), ds("Casa Total", "#dc2626", "casa"), ds("Resto Vivienda", "#2563eb", "diff")] },
       options: {
-        responsive: true,
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
         scales: {
-          y: {
-            beginAtZero: true
-          }
+          x: {
+            type: "time", time: { unit: "minute", tooltipFormat: "HH:mm" },
+            ticks: { callback: (val) => fmtHora(val) }
+          },
+          y: { min: 0, title: { display: true, text: "Potencia (W)" }, ticks: { callback: v => v + " W" } }
+        },
+        plugins: {
+          zoom: { zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" }, pan: { enabled: true, mode: "x" } },
+          tooltip: { callbacks: { title: (items) => fmtFechaHora(items[0].parsed.x) } }
         }
       }
-    });
+    };
+
+    if (chart) {
+      chart.data.datasets = config.data.datasets;
+      chart.options.scales.x.ticks.callback = config.options.scales.x.ticks.callback;
+      chart.update("none");
+    } else {
+      chart = new Chart(document.getElementById("chartConsumo"), config);
+    }
+  }
+
+  function actualizarEstado(latest) {
+    if (!latest) return;
+    const age = latest.ageSeconds || 0;
+    elEstadoBar.className = "estado-barra " + (age > STALE_ERR_SEC ? "estado-error" : age > STALE_WARN_SEC ? "estado-aviso" : "estado-ok");
+    elEstadoTxt.textContent = age > STALE_ERR_SEC
+      ? `El Shelly lleva ${Math.round(age/60)} min sin enviar datos.`
+      : age > STALE_WARN_SEC
+      ? `Sin datos nuevos desde hace ${Math.round(age/60)} min (última: ${fmtHora(latest.timestamp)})`
+      : "Datos actualizados correctamente.";
+  }
+
+  // ── CONTROLES Y EVENTOS ────────────────────────────────────────────────────
+  function iniciarRefresco() {
+    detenerRefresco();
+    if (modo === "live") {
+      refreshTimer = setInterval(() => {
+        cargarDatos(true);
+        elEstadoRef.textContent = `Refresco automático activo`;
+      }, REFRESH_INTERVAL_MS);
+    }
+  }
+  function detenerRefresco() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
+
+  function setModoLive() {
+    modo = "live"; fechaSeleccionada = null; elFecha.value = "";
+    elBtnHoy.classList.add("activo");
+    datosUnificados = []; lastTimestamp = 0;
+    iniciarRefresco();
+    cargarDatos(false);
+  }
+
+  function setModoDia(fecha) {
+    modo = "day"; fechaSeleccionada = fecha;
+    elFecha.value = fecha.toISOString().slice(0, 10);
+    elBtnHoy.classList.remove("activo");
+    detenerRefresco();
+    datosUnificados = []; lastTimestamp = 0;
+    cargarDatos(false);
+  }
+
+  elBtnHoy.addEventListener("click", setModoLive);
+  elBtnAnt.addEventListener("click", () => {
+    const d = fechaSeleccionada || new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    setModoDia(d);
   });
+  elBtnSig.addEventListener("click", () => {
+    const d = fechaSeleccionada || new Date();
+    d.setUTCDate(d.getUTCDate() + 1);
+    setModoDia(d);
+  });
+  elFecha.addEventListener("change", (e) => {
+    if (e.target.value) setModoDia(new Date(e.target.value + "T00:00:00Z"));
+  });
+  elBtnTz.addEventListener("click", () => {
+    tzMode = tzMode === "UTC" ? "local" : "UTC";
+    elBtnTz.textContent = tzMode === "UTC" ? "🕒 UTC" : "🕒 Local";
+    if (chart) {
+      chart.options.scales.x.ticks.callback = (val) => fmtHora(val);
+      chart.update("none");
+    }
+    actualizarTarjetas(); // Refrescar timestamps en tooltips/tarjetas
+  });
+  elBtnCsv.addEventListener("click", () => {
+    if (datosUnificados.length === 0) return alert("No hay datos para exportar.");
+    let csv = "Timestamp,FechaUTC,Aerotermia_W,Casa_W,Diferencia_W\n";
+    datosUnificados.forEach(d => {
+      csv += `${d.ts},${new Date(d.ts).toISOString()},${d.aero??""},${d.casa??""},${d.diff??""}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `consumo_shelly_${modo === "live" ? "vivo" : fechaSeleccionada.toISOString().slice(0,10)}.csv`;
+    link.click();
+  });
+
+  // ── INICIO ─────────────────────────────────────────────────────────────────
+  setModoLive();
+});
 </script>
