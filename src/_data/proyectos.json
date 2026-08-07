@@ -16,6 +16,14 @@
     "categoria": "Domótica"
   },
   {
+    "id": "shelly-bip30-a",
+    "nombre": "Shelly BIP30 A",
+    "descripcion": "Página complementaria para la monitorización eléctrica de la instalación A.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30-a.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
     "id": "apuntes",
     "nombre": "Apuntes Técnicos",
     "descripcion": "Base de conocimiento personal, comandos útiles y guías rápidas.",
