@@ -16,6 +16,38 @@
     "categoria": "Domótica"
   },
   {
+    "id": "shelly-bip30-p1",
+    "nombre": "Shelly BIP30 P1",
+    "descripcion": "Página P1 del proyecto de monitorización eléctrica con Shelly BIP30.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30-P1.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
+    "id": "shelly-bip30-p2",
+    "nombre": "Shelly BIP30 P2",
+    "descripcion": "Página P2 del proyecto de monitorización eléctrica con Shelly BIP30.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30-P2.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
+    "id": "shelly-bip30-p3",
+    "nombre": "Shelly BIP30 P3",
+    "descripcion": "Página P3 del proyecto de monitorización eléctrica con Shelly BIP30.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30-P3.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
+    "id": "shelly-bip30-p4",
+    "nombre": "Shelly BIP30 P4",
+    "descripcion": "Página P4 del proyecto de monitorización eléctrica con Shelly BIP30.",
+    "url": "/proyectos/monitores-electricos/shelly-bip30-P4.html",
+    "externo": false,
+    "categoria": "Domótica"
+  },
+  {
     "id": "shelly-bip30-a",
     "nombre": "Shelly BIP30 A",
     "descripcion": "Página complementaria para la monitorización eléctrica de la instalación A.",

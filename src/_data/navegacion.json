@@ -7,6 +7,10 @@
     "submenu": [
       { "texto": "Enlaces de Interés", "url": "/proyectos/enlaces-de-interes/enlaces-de-interes-originales.html" },
       { "texto": "Monitores Eléctricos", "url": "/proyectos/monitores-electricos/shelly-bip30.html" },
+      { "texto": "Shelly BIP30 P1", "url": "/proyectos/monitores-electricos/shelly-bip30-P1.html" },
+      { "texto": "Shelly BIP30 P2", "url": "/proyectos/monitores-electricos/shelly-bip30-P2.html" },
+      { "texto": "Shelly BIP30 P3", "url": "/proyectos/monitores-electricos/shelly-bip30-P3.html" },
+      { "texto": "Shelly BIP30 P4", "url": "/proyectos/monitores-electricos/shelly-bip30-P4.html" },
       { "texto": "Shelly BIP30 A", "url": "/proyectos/monitores-electricos/shelly-bip30-a.html" },
       { "texto": "Apuntes", "url": "/proyectos/notas/apuntes.html" },
       { "texto": "Notas", "url": "/proyectos/notas/notas.html" },
