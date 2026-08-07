@@ -159,7 +159,7 @@ categoria: Domótica
 <details class="mon-notas">
   <summary>Notas metodológicas y limitaciones</summary>
   <ul>
-    <li><strong>Origen:</strong> la página solo consulta el Worker de Cloudflare (<code>/api/range</code> y <code>/api/latest</code>); nunca accede directamente al Shelly.</li>
+    <li><strong>Origen:</strong> la página solo consulta el Worker de Cloudflare (<code>/api/datos</code> para ambos canales y <code>/api/latest</code> para la tarjeta actual); nunca accede directamente al Shelly.</li>
     <li><strong>Almacenamiento:</strong> los instantes se guardan como epoch en milisegundos (UTC absoluto).
         El conmutador UTC/Local solo cambia el formato de presentación.</li>
     <li><strong>«Resto vivienda»</strong> = Casa - Aerotermia. Puede salir <em>negativa</em> por desfase de
@@ -417,12 +417,13 @@ categoria: Domótica
     return Date.UTC(Number(p[0]), Number(p[1])-1, Number(p[2]));
   }
 
-  /* ===================== API ===================== */
-  function pedirRango(desdeMs, hastaMs) {
-    var url = new URL(API_BASE + '/api/range');
-    url.searchParams.set('start', new Date(desdeMs).toISOString());
-    url.searchParams.set('end',   new Date(hastaMs).toISOString());
-    url.searchParams.set('bucket', (hastaMs - desdeMs) <= 48 * 3600000 ? 'raw' : 'auto');
+  /* ===================== API (modificada: usa /api/datos para cada canal) ===================== */
+  function pedirCanal(canal, desdeMs, hastaMs) {
+    var url = new URL(API_BASE + '/api/datos');
+    url.searchParams.set('start',   new Date(desdeMs).toISOString());
+    url.searchParams.set('end',     new Date(hastaMs).toISOString());
+    url.searchParams.set('channel', String(canal));
+    url.searchParams.set('bucket',  'raw'); // 1 punto/minuto hasta 48h
     return fetch(url.toString(), {headers:{'Accept':'application/json'}})
       .then(function(r) { return r.json().catch(function(){return null;}).then(function(j){
         if (!r.ok || !j || j.success !== true) throw new Error((j&&j.error)||('HTTP '+r.status));
@@ -430,12 +431,23 @@ categoria: Domótica
       });});
   }
 
-  function pedirLatest() {
-    return fetch(API_BASE + '/api/latest', {headers:{'Accept':'application/json'}})
-      .then(function(r) { return r.json().catch(function(){return null;}).then(function(j){
-        if (!r.ok || !j) return null;
-        return j;
-      });});
+  // Fusiona los dos canales en un array de registros {t, aeroW, aeroWh, casaW, casaWh}
+  function fusionar(respAero, respCasa) {
+    var mapa = new Map();
+    (respAero.data || []).forEach(function(f) {
+      var t = Number(f.timestamp);
+      if (!Number.isFinite(t)) return;
+      mapa.set(t, { t: t, aeroW: f.power_w, aeroWh: f.total_wh, casaW: null, casaWh: null });
+    });
+    (respCasa.data || []).forEach(function(f) {
+      var t = Number(f.timestamp);
+      if (!Number.isFinite(t)) return;
+      var r = mapa.get(t);
+      if (!r) { r = { t: t, aeroW: null, aeroWh: null, casaW: null, casaWh: null }; mapa.set(t, r); }
+      r.casaW  = f.power_w;
+      r.casaWh = f.total_wh;
+    });
+    return Array.from(mapa.values()).sort(function(a,b) { return a.t - b.t; });
   }
 
   /* ===================== CARGA ===================== */
@@ -455,24 +467,13 @@ categoria: Domótica
 
     var r = rangoActual();
 
-    Promise.all([pedirRango(r.desde, r.hasta), pedirLatest()])
+    Promise.all([pedirCanal(0, r.desde, r.hasta), pedirCanal(1, r.desde, r.hasta)])
       .then(function(res) {
-        var rango = res[0];
-        var latest = res[1];
+        registros = fusionar(res[0], res[1]);
 
-        // Normalizar: el worker devuelve data[].t
-        registros = (rango && Array.isArray(rango.data)) ? rango.data.map(function(d) {
-          return { t: d.t, aeroW: d.aeroW, aeroWh: d.aeroWh, casaW: d.casaW, casaWh: d.casaWh };
-        }) : [];
-
+        // El latest lo tomamos de cualquiera de las respuestas (incluyen el campo latest global)
+        window._monLatest = res[0].latest || res[1].latest || null;
         tsUltimoOk = Date.now();
-
-        // Guardar latest para la tarjeta (si viene en rango, usar ese; si no, pedirlo)
-        if (rango && rango.latest) {
-          window._monLatest = rango.latest;
-        } else if (latest && latest.latest) {
-          window._monLatest = latest.latest;
-        }
 
         if (registros.length === 0) {
           mostrarAviso('aviso', 'No hay datos para este periodo.');
@@ -504,18 +505,17 @@ categoria: Domótica
 
     cargando = true;
 
-    pedirRango(desde, hasta)
-      .then(function(rango) {
-        if (rango && Array.isArray(rango.data) && rango.data.length > 0) {
-          var nuevos = rango.data.map(function(d) {
-            return { t: d.t, aeroW: d.aeroW, aeroWh: d.aeroWh, casaW: d.casaW, casaWh: d.casaWh };
-          });
-          registros = registros.concat(nuevos);
-          // Poda: mantener solo 24h
-          var corte = Date.now() - VENTANA_VIVO_MS;
-          registros = registros.filter(function(x) { return x.t >= corte; });
-        }
-        if (rango && rango.latest) window._monLatest = rango.latest;
+    Promise.all([pedirCanal(0, desde, hasta), pedirCanal(1, desde, hasta)])
+      .then(function(res) {
+        var nuevos = fusionar(res[0], res[1]);
+        if (nuevos.length > 0) registros = registros.concat(nuevos);
+
+        window._monLatest = res[0].latest || res[1].latest || window._monLatest;
+
+        // Poda: mantener solo 24h
+        var corte = Date.now() - VENTANA_VIVO_MS;
+        registros = registros.filter(function(x) { return x.t >= corte; });
+
         tsUltimoOk = Date.now();
         reconstruir();
         ocultarAviso();
