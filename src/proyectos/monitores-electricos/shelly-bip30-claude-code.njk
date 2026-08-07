@@ -1,31 +1,31 @@
 ---
 layout: layouts/proyecto.njk
 title: Monitor de consumo Shelly EM
-description: Potencia instant·nea de la aerotermia, del total de la vivienda y del resto de la casa, minuto a minuto, desde Cloudflare D1.
-categoria: DomÛtica
+description: Potencia instant√°nea de la aerotermia, del total de la vivienda y del resto de la casa, minuto a minuto, desde Cloudflare D1.
+categoria: Dom√≥tica
 ---
 
 <p>
-  Datos leÌdos cada minuto del <strong>Shelly EM</strong> y almacenados en Cloudflare D1.
+  Datos le√≠dos cada minuto del <strong>Shelly EM</strong> y almacenados en Cloudflare D1.
   El canal 1 (pinza 50 A) mide la <strong>aerotermia</strong>; el canal 2 (pinza 120 A) mide el
-  <strong>total de la vivienda</strong>. La serie <strong>´Resto viviendaª</strong> es la diferencia
+  <strong>total de la vivienda</strong>. La serie <strong>¬´Resto vivienda¬ª</strong> es la diferencia
   <em>Casa - Aerotermia</em>, calculada en el navegador.
 </p>
 
 <noscript>
   <p class="mon-estado mon-estado--error">
-    Esta p·gina necesita JavaScript para consultar los datos y dibujar el gr·fico.
+    Esta p√°gina necesita JavaScript para consultar los datos y dibujar el gr√°fico.
   </p>
 </noscript>
 
 <!-- ===================== CONTROLES ===================== -->
 <section class="mon-controles" aria-label="Controles del monitor">
-  <div class="mon-grupo" role="group" aria-label="SelecciÛn de periodo">
-    <button type="button" id="mon-dia-anterior" class="mon-btn" title="DÌa anterior">?</button>
-    <label class="mon-etiqueta" for="mon-fecha">DÌa (UTC)</label>
+  <div class="mon-grupo" role="group" aria-label="Selecci√≥n de periodo">
+    <button type="button" id="mon-dia-anterior" class="mon-btn" title="D√≠a anterior">?</button>
+    <label class="mon-etiqueta" for="mon-fecha">D√≠a (UTC)</label>
     <input type="date" id="mon-fecha" class="mon-input">
-    <button type="button" id="mon-dia-siguiente" class="mon-btn" title="DÌa siguiente">?</button>
-    <button type="button" id="mon-vivo" class="mon-btn mon-btn--activo">⁄ltimas 24 h</button>
+    <button type="button" id="mon-dia-siguiente" class="mon-btn" title="D√≠a siguiente">?</button>
+    <button type="button" id="mon-vivo" class="mon-btn mon-btn--activo">√öltimas 24 h</button>
   </div>
 
   <div class="mon-grupo" role="group" aria-label="Zona horaria">
@@ -55,14 +55,14 @@ categoria: DomÛtica
 </section>
 
 <p class="mon-meta">
-  <span id="mon-periodo">CargandoÖ</span>
-  <span class="mon-sep">ï</span>
-  <span id="mon-actualizado">ó</span>
+  <span id="mon-periodo">Cargando‚Ä¶</span>
+  <span class="mon-sep">‚Ä¢</span>
+  <span id="mon-actualizado">‚Äî</span>
 </p>
 
 <!-- ===================== AVISOS ===================== -->
 <div id="mon-aviso" class="mon-estado mon-estado--info" role="status" aria-live="polite">
-  Cargando datosÖ
+  Cargando datos‚Ä¶
 </div>
 
 <div id="mon-estado-shelly" class="mon-estado mon-estado--info" role="status" aria-live="polite" hidden></div>
@@ -70,113 +70,113 @@ categoria: DomÛtica
 <!-- ===================== TARJETAS ===================== -->
 <div class="mon-tarjetas">
 
-  <!-- (A) SituaciÛn actual -->
+  <!-- (A) Situaci√≥n actual -->
   <section class="tarjeta mon-tarjeta" aria-labelledby="mon-h-actual">
-    <h2 id="mon-h-actual" class="mon-titulo">SituaciÛn actual</h2>
-    <p class="mon-subtitulo">⁄ltima lectura registrada en la base de datos.</p>
+    <h2 id="mon-h-actual" class="mon-titulo">Situaci√≥n actual</h2>
+    <p class="mon-subtitulo">√öltima lectura registrada en la base de datos.</p>
     <ul class="mon-lista-valores">
       <li>
         <span class="mon-punto" style="background:#16a34a"></span>
         <span class="mon-clave">Aerotermia</span>
-        <span class="mon-valor" id="mon-act-aero">ó</span>
+        <span class="mon-valor" id="mon-act-aero">‚Äî</span>
       </li>
       <li>
         <span class="mon-punto" style="background:#2563eb"></span>
         <span class="mon-clave">Resto vivienda</span>
-        <span class="mon-valor" id="mon-act-resto">ó</span>
+        <span class="mon-valor" id="mon-act-resto">‚Äî</span>
       </li>
       <li>
         <span class="mon-punto" style="background:#dc2626"></span>
         <span class="mon-clave">Casa (total)</span>
-        <span class="mon-valor" id="mon-act-casa">ó</span>
+        <span class="mon-valor" id="mon-act-casa">‚Äî</span>
       </li>
     </ul>
-    <p class="mon-pie-tarjeta">Fecha del dato: <strong id="mon-act-fecha">ó</strong></p>
+    <p class="mon-pie-tarjeta">Fecha del dato: <strong id="mon-act-fecha">‚Äî</strong></p>
   </section>
 
-  <!-- (B) EstadÌsticas del periodo -->
+  <!-- (B) Estad√≠sticas del periodo -->
   <section class="tarjeta mon-tarjeta" aria-labelledby="mon-h-stats">
-    <h2 id="mon-h-stats" class="mon-titulo">EstadÌsticas del periodo</h2>
-    <p class="mon-subtitulo">Calculadas sobre los datos mostrados en el gr·fico.</p>
+    <h2 id="mon-h-stats" class="mon-titulo">Estad√≠sticas del periodo</h2>
+    <p class="mon-subtitulo">Calculadas sobre los datos mostrados en el gr√°fico.</p>
     <div class="mon-tabla-scroll">
       <table class="mon-tabla">
         <thead>
           <tr>
             <th scope="col">Serie</th>
-            <th scope="col">MÌnimo</th>
-            <th scope="col">M·ximo</th>
+            <th scope="col">M√≠nimo</th>
+            <th scope="col">M√°ximo</th>
             <th scope="col">Media</th>
-            <th scope="col">EnergÌa</th>
+            <th scope="col">Energ√≠a</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <th scope="row"><span class="mon-punto" style="background:#16a34a"></span>Aerotermia</th>
-            <td id="mon-st-aero-min">ó</td>
-            <td id="mon-st-aero-max">ó</td>
-            <td id="mon-st-aero-med">ó</td>
-            <td id="mon-st-aero-kwh">ó</td>
+            <td id="mon-st-aero-min">‚Äî</td>
+            <td id="mon-st-aero-max">‚Äî</td>
+            <td id="mon-st-aero-med">‚Äî</td>
+            <td id="mon-st-aero-kwh">‚Äî</td>
           </tr>
           <tr>
             <th scope="row"><span class="mon-punto" style="background:#2563eb"></span>Resto vivienda</th>
-            <td id="mon-st-resto-min">ó</td>
-            <td id="mon-st-resto-max">ó</td>
-            <td id="mon-st-resto-med">ó</td>
-            <td id="mon-st-resto-kwh">ó</td>
+            <td id="mon-st-resto-min">‚Äî</td>
+            <td id="mon-st-resto-max">‚Äî</td>
+            <td id="mon-st-resto-med">‚Äî</td>
+            <td id="mon-st-resto-kwh">‚Äî</td>
           </tr>
           <tr>
             <th scope="row"><span class="mon-punto" style="background:#dc2626"></span>Casa (total)</th>
-            <td id="mon-st-casa-min">ó</td>
-            <td id="mon-st-casa-max">ó</td>
-            <td id="mon-st-casa-med">ó</td>
-            <td id="mon-st-casa-kwh">ó</td>
+            <td id="mon-st-casa-min">‚Äî</td>
+            <td id="mon-st-casa-max">‚Äî</td>
+            <td id="mon-st-casa-med">‚Äî</td>
+            <td id="mon-st-casa-kwh">‚Äî</td>
           </tr>
         </tbody>
       </table>
     </div>
     <p class="mon-pie-tarjeta" id="mon-nota-energia">
-      EnergÌa = contador acumulado del Shelly (˙ltimo - primero del periodo).
+      Energ√≠a = contador acumulado del Shelly (√∫ltimo - primero del periodo).
     </p>
   </section>
 
 </div>
 
-<!-- ===================== GR¡FICO ===================== -->
+<!-- ===================== GR√ÅFICO ===================== -->
 <section class="tarjeta mon-tarjeta mon-tarjeta--grafico" aria-labelledby="mon-h-grafico">
-  <h2 id="mon-h-grafico" class="mon-titulo">Potencia instant·nea (W)</h2>
+  <h2 id="mon-h-grafico" class="mon-titulo">Potencia instant√°nea (W)</h2>
   <div class="mon-grafico-caja">
     <canvas id="mon-grafico"
             role="img"
-            aria-label="Gr·fico de potencia instant·nea de aerotermia, resto de la vivienda y casa total"></canvas>
+            aria-label="Gr√°fico de potencia instant√°nea de aerotermia, resto de la vivienda y casa total"></canvas>
   </div>
   <p class="mon-pie-tarjeta">
-    Rueda del ratÛn = zoom horizontal. Arrastrar = desplazar.
-    Los huecos en las lÌneas indican periodos sin datos (m·s de 2 minutos entre lecturas).
+    Rueda del rat√≥n = zoom horizontal. Arrastrar = desplazar.
+    Los huecos en las l√≠neas indican periodos sin datos (m√°s de 2 minutos entre lecturas).
   </p>
 </section>
 
 <!-- ===================== NOTAS ===================== -->
 <details class="mon-notas">
-  <summary>Notas metodolÛgicas y limitaciones</summary>
+  <summary>Notas metodol√≥gicas y limitaciones</summary>
   <ul>
-    <li><strong>Origen:</strong> la p·gina solo consulta el Worker de Cloudflare (<code>/api/datos</code> para ambos canales y <code>/api/latest</code> para la tarjeta actual); nunca accede directamente al Shelly.</li>
+    <li><strong>Origen:</strong> la p√°gina solo consulta el Worker de Cloudflare (<code>/api/datos</code> para ambos canales y <code>/api/latest</code> para la tarjeta actual); nunca accede directamente al Shelly.</li>
     <li><strong>Almacenamiento:</strong> los instantes se guardan como epoch en milisegundos (UTC absoluto).
-        El conmutador UTC/Local solo cambia el formato de presentaciÛn.</li>
-    <li><strong>´Resto viviendaª</strong> = Casa - Aerotermia. Puede salir <em>negativa</em> por desfase de
-        muestreo entre pinzas, tolerancia de medida (±1ñ2 %) o factor de potencia. Se muestra tal cual,
+        El conmutador UTC/Local solo cambia el formato de presentaci√≥n.</li>
+    <li><strong>¬´Resto vivienda¬ª</strong> = Casa - Aerotermia. Puede salir <em>negativa</em> por desfase de
+        muestreo entre pinzas, tolerancia de medida (¬±1‚Äì2 %) o factor de potencia. Se muestra tal cual,
         sin recortar a 0.</li>
-    <li><strong>EnergÌa (kWh):</strong> se usa el contador acumulado del Shelly (m·s exacto que integrar
-        la potencia). Si el contador se reinicia, el resultado serÌa negativo; en ese caso se marca como
+    <li><strong>Energ√≠a (kWh):</strong> se usa el contador acumulado del Shelly (m√°s exacto que integrar
+        la potencia). Si el contador se reinicia, el resultado ser√≠a negativo; en ese caso se marca como
         <em>no fiable</em>.</li>
-    <li><strong>DÌa seleccionado:</strong> el calendario trabaja siempre con dÌas UTC completos
-        (00:00:00Z ñ 23:59:59Z), aunque el eje se muestre en hora local.</li>
-    <li><strong>Auto-refresco:</strong> solo en modo ´⁄ltimas 24 hª, cada 60 segundos, pidiendo ˙nicamente
-        los datos posteriores a la ˙ltima lectura ya cargada. Un dÌa pasado no se refresca: no cambia.</li>
+    <li><strong>D√≠a seleccionado:</strong> el calendario trabaja siempre con d√≠as UTC completos
+        (00:00:00Z ‚Äì 23:59:59Z), aunque el eje se muestre en hora local.</li>
+    <li><strong>Auto-refresco:</strong> solo en modo ¬´√öltimas 24 h¬ª, cada 60 segundos, pidiendo √∫nicamente
+        los datos posteriores a la √∫ltima lectura ya cargada. Un d√≠a pasado no se refresca: no cambia.</li>
   </ul>
 </details>
 
 <style>
-  /* Estilos especÌficos del monitor ó reutilizan :root de estilos.css */
+  /* Estilos espec√≠ficos del monitor ‚Äî reutilizan :root de estilos.css */
 
   .mon-controles {
     display: flex;
@@ -334,7 +334,7 @@ categoria: DomÛtica
   }
 </style>
 
-<!-- LibrerÌas (CDN jsDelivr) -->
+<!-- Librer√≠as (CDN jsDelivr) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
@@ -345,14 +345,14 @@ categoria: DomÛtica
 (function () {
   'use strict';
 
-  /* ===================== CONFIGURACI”N ===================== */
+  /* ===================== CONFIGURACI√ìN ===================== */
   var API_BASE        = 'https://worker-monitor-shelly-aerotermia.borkosmoreno.workers.dev';
   var REFRESCO_MS     = 60000;    // 60 s como pediste
   var HUECO_MAX_MS    = 120000;   // >2 min => hueco (null)
   var STALE_AVISO_S   = 180;      // >3 min => amarillo
   var STALE_ERROR_S   = 900;      // >15 min => rojo
   var VENTANA_VIVO_MS = 86400000; // 24 h
-  var MAX_DIAS        = 7;        // rango m·ximo del worker
+  var MAX_DIAS        = 7;        // rango m√°ximo del worker
 
   var COLOR = { aero: '#16a34a', resto: '#2563eb', casa: '#dc2626' };
 
@@ -377,11 +377,11 @@ categoria: DomÛtica
   }
 
   function fmtHora(t) {
-    return Number.isFinite(t) ? fmt(t, {hour:'2-digit',minute:'2-digit',hour12:false}) : 'ó';
+    return Number.isFinite(t) ? fmt(t, {hour:'2-digit',minute:'2-digit',hour12:false}) : '‚Äî';
   }
 
   function fmtFH(t) {
-    if (!Number.isFinite(t)) return 'ó';
+    if (!Number.isFinite(t)) return '‚Äî';
     var s = fmt(t, {
       day:'2-digit',month:'2-digit',year:'numeric',
       hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
@@ -389,9 +389,9 @@ categoria: DomÛtica
     return s + (modoUTC ? ' UTC' : ' (local)');
   }
 
-  function fmtW(v) { return Number.isFinite(v) ? nfW.format(v) + ' W' : 'ó'; }
+  function fmtW(v) { return Number.isFinite(v) ? nfW.format(v) + ' W' : '‚Äî'; }
 
-  /* ===================== CONVERSI”N UTC / LOCAL PARA EL EJE X ===================== */
+  /* ===================== CONVERSI√ìN UTC / LOCAL PARA EL EJE X ===================== */
   // chartjs-adapter-date-fns dibuja siempre en hora local del navegador.
   // Para mostrar UTC desplazamos el valor "x" para que el reloj renderizado coincida.
   function aDisplay(rawMs) {
@@ -463,7 +463,7 @@ categoria: DomÛtica
   function cargarCompleto() {
     if (cargando) return;
     cargando = true;
-    mostrarAviso('info', 'Cargando datosÖ');
+    mostrarAviso('info', 'Cargando datos‚Ä¶');
 
     var r = rangoActual();
 
@@ -486,7 +486,7 @@ categoria: DomÛtica
       .catch(function(err) {
         var m = err && err.message ? err.message : String(err);
         if (/failed to fetch|networkerror|load failed/i.test(m)) {
-          mostrarAviso('error', 'El Worker no responde. Revisa la conexiÛn o el estado del Worker de Cloudflare.');
+          mostrarAviso('error', 'El Worker no responde. Revisa la conexi√≥n o el estado del Worker de Cloudflare.');
         } else {
           mostrarAviso('error', 'Error al obtener los datos: ' + m);
         }
@@ -494,7 +494,7 @@ categoria: DomÛtica
       .then(function() { cargando = false; });
   }
 
-  // Refresco incremental: solo pide datos posteriores al ˙ltimo registro
+  // Refresco incremental: solo pide datos posteriores al √∫ltimo registro
   function cargarIncremental() {
     if (cargando || !modoVivo) return;
     if (registros.length === 0) { cargarCompleto(); return; }
@@ -535,7 +535,7 @@ categoria: DomÛtica
     var prev = null;
 
     registros.forEach(function(r) {
-      // Hueco: >2 min entre lecturas => null que rompe la lÌnea
+      // Hueco: >2 min entre lecturas => null que rompe la l√≠nea
       if (prev !== null && (r.t - prev) > HUECO_MAX_MS) {
         var xh = aDisplay(prev + 60000);
         aero.push({x: xh, y: null});
@@ -557,7 +557,7 @@ categoria: DomÛtica
     return {aero: aero, resto: resto, casa: casa};
   }
 
-  /* ===================== GR¡FICO ===================== */
+  /* ===================== GR√ÅFICO ===================== */
   function serieBase(etiqueta, color, visible) {
     return {
       label: etiqueta,
@@ -639,7 +639,7 @@ categoria: DomÛtica
     });
   }
 
-  /* ===================== ESTADÕSTICAS ===================== */
+  /* ===================== ESTAD√çSTICAS ===================== */
   function resumen(getter) {
     var n = 0, suma = 0, mn = Infinity, mnT = null, mx = -Infinity, mxT = null;
     registros.forEach(function(r) {
@@ -666,12 +666,12 @@ categoria: DomÛtica
   }
 
   function celdaExtremo(valor, t) {
-    if (!Number.isFinite(valor)) return 'ó';
+    if (!Number.isFinite(valor)) return '‚Äî';
     return nfW.format(valor) + ' W<span class="mon-sub">' + fmtHora(t) + '</span>';
   }
 
   function celdaKWh(v, fiable) {
-    if (v === null || !Number.isFinite(v)) return 'ó';
+    if (v === null || !Number.isFinite(v)) return '‚Äî';
     var txt = nfKWh.format(v) + ' kWh';
     if (!fiable) return '<span class="mon-nofiable">' + txt + '<span class="mon-sub">no fiable</span></span>';
     return txt;
@@ -693,17 +693,17 @@ categoria: DomÛtica
 
     [['aero',rA,kA,fiableA],['resto',rR,kR,fiableR],['casa',rC,kC,fiableC]].forEach(function(f) {
       var id = f[0], res = f[1], kwh = f[2], fiable = f[3];
-      document.getElementById('mon-st-'+id+'-min').innerHTML = res ? celdaExtremo(res.min, res.minT) : 'ó';
-      document.getElementById('mon-st-'+id+'-max').innerHTML = res ? celdaExtremo(res.max, res.maxT) : 'ó';
-      document.getElementById('mon-st-'+id+'-med').textContent = res ? (nfW.format(res.media)+' W') : 'ó';
+      document.getElementById('mon-st-'+id+'-min').innerHTML = res ? celdaExtremo(res.min, res.minT) : '‚Äî';
+      document.getElementById('mon-st-'+id+'-max').innerHTML = res ? celdaExtremo(res.max, res.maxT) : '‚Äî';
+      document.getElementById('mon-st-'+id+'-med').textContent = res ? (nfW.format(res.media)+' W') : '‚Äî';
       document.getElementById('mon-st-'+id+'-kwh').innerHTML = celdaKWh(kwh, fiable);
     });
 
     var nota = document.getElementById('mon-nota-energia');
     if (!fiableA || !fiableC) {
-      nota.innerHTML = 'EnergÌa = contador acumulado del Shelly (˙ltimo - primero). <strong class="mon-nofiable">Valor negativo detectado: el contador pudo reiniciarse.</strong>';
+      nota.innerHTML = 'Energ√≠a = contador acumulado del Shelly (√∫ltimo - primero). <strong class="mon-nofiable">Valor negativo detectado: el contador pudo reiniciarse.</strong>';
     } else {
-      nota.textContent = 'EnergÌa = contador acumulado del Shelly (˙ltimo - primero del periodo).';
+      nota.textContent = 'Energ√≠a = contador acumulado del Shelly (√∫ltimo - primero del periodo).';
     }
   }
 
@@ -719,7 +719,7 @@ categoria: DomÛtica
     document.getElementById('mon-act-casa').textContent  = fmtW(c);
 
     var ts = Number(latest.timestamp);
-    document.getElementById('mon-act-fecha').textContent = Number.isFinite(ts) ? fmtFH(ts) : 'ó';
+    document.getElementById('mon-act-fecha').textContent = Number.isFinite(ts) ? fmtFH(ts) : '‚Äî';
   }
 
   function pintarEstadoShelly() {
@@ -739,19 +739,19 @@ categoria: DomÛtica
 
     if (seg <= STALE_AVISO_S) {
       caja.className = 'mon-estado mon-estado--ok';
-      caja.textContent = 'Shelly enviando datos con normalidad (˙ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
+      caja.textContent = 'Shelly enviando datos con normalidad (√∫ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
     } else if (seg <= STALE_ERROR_S) {
       caja.className = 'mon-estado mon-estado--aviso';
-      caja.textContent = 'Sin datos nuevos desde hace ' + min + ' min (˙ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
+      caja.textContent = 'Sin datos nuevos desde hace ' + min + ' min (√∫ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
     } else {
       caja.className = 'mon-estado mon-estado--error';
-      caja.textContent = 'El Shelly lleva ' + min + ' minutos sin enviar datos (˙ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
+      caja.textContent = 'El Shelly lleva ' + min + ' minutos sin enviar datos (√∫ltima lectura: ' + fmtHora(t) + (modoUTC ? ' UTC' : ' local') + ').';
     }
   }
 
   function pintarContadorRefresco() {
     var el = document.getElementById('mon-actualizado');
-    if (tsUltimoOk === null) { el.textContent = 'Sin actualizar todavÌa'; return; }
+    if (tsUltimoOk === null) { el.textContent = 'Sin actualizar todav√≠a'; return; }
     var s = Math.max(0, Math.round((Date.now() - tsUltimoOk) / 1000));
     el.textContent = 'Actualizado hace ' + (s < 60 ? (s+' s') : (Math.floor(s/60)+' min'));
   }
@@ -760,9 +760,9 @@ categoria: DomÛtica
     var el = document.getElementById('mon-periodo');
     var r = rangoActual();
     if (modoVivo) {
-      el.textContent = 'Mostrando: ˙ltimas 24 h (' + fmtHora(r.desde) + ' ? ' + fmtHora(r.hasta) + ')';
+      el.textContent = 'Mostrando: √∫ltimas 24 h (' + fmtHora(r.desde) + ' ? ' + fmtHora(r.hasta) + ')';
     } else {
-      el.textContent = 'Mostrando: dÌa ' + fechaDia + ' completo en UTC';
+      el.textContent = 'Mostrando: d√≠a ' + fechaDia + ' completo en UTC';
     }
   }
 
@@ -775,7 +775,7 @@ categoria: DomÛtica
 
   function ocultarAviso() { document.getElementById('mon-aviso').hidden = true; }
 
-  /* ===================== RECONSTRUCCI”N ===================== */
+  /* ===================== RECONSTRUCCI√ìN ===================== */
   function reconstruir() {
     if (grafico) {
       var s = construirSeries();
