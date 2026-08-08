@@ -1,0 +1,119 @@
+---
+layout: layouts/proyecto.njk
+title: Monitor Shelly EM — Aerotermia y consumo total
+description: Potencia instantánea de aerotermia, vivienda completa y resto de la casa minuto a minuto desde Cloudflare D1. Gráfica con huecos, estado del Shelly y estadísticas del periodo.
+categoria: Domótica
+---
+
+<p>
+  Datos leídos cada minuto del <strong>Shelly EM</strong> (pinza 50 A aerotermia y pinza 120 A total vivienda) y almacenados en <strong>Cloudflare D1</strong>.
+  La página <strong>solo consulta el Worker</strong> <code>worker-monitor-shelly-aerotermia</code> (<code>/api/latest</code> y <code>/api/range</code>); nunca accede directamente al Shelly.
+  Serie <strong>Resto vivienda = Casa − Aerotermia</strong> calculada en el navegador. Puede ser negativa por desfase de muestreo o tolerancia de medida y se muestra tal cual.
+</p>
+
+<noscript>
+  <p class="mon-estado mon-estado--error">Esta página necesita JavaScript para consultar el Worker y dibujar el gráfico.</p>
+</noscript>
+
+<!-- ===================== CONTROLES ===================== -->
+<section class="mon-controles" aria-label="Controles del monitor">
+
+  <div class="mon-grupo" role="group" aria-label="Selección periodo">
+    <button type="button" id="btn-dia-ant" class="mon-btn" title="Día anterior">◀</button>
+    <label class="mon-etiqueta" for="inp-fecha">Día (UTC)</label>
+    <input type="date" id="inp-fecha" class="mon-input">
+    <button type="button" id="btn-dia-sig" class="mon-btn" title="Día siguiente">▶</button>
+    <button type="button" id="btn-vivo" class="mon-btn mon-btn--activo">Últimas 24 h</button>
+  </div>
+
+  <div class="mon-grupo" role="group" aria-label="Zona horaria">
+    <span class="mon-etiqueta">Eje X</span>
+    <button type="button" id="btn-utc" class="mon-btn mon-btn--activo">UTC</button>
+    <button type="button" id="btn-local" class="mon-btn">Local</button>
+    <span class="mon-etiqueta" style="margin-left:0.6rem">Series</span>
+    <label class="mon-check"><input type="checkbox" id="chk-aero" checked> <span class="mon-punto" style="background:#16a34a"></span> Aerotermia</label>
+    <label class="mon-check"><input type="checkbox" id="chk-resto" checked> <span class="mon-punto" style="background:#2563eb"></span> Resto</label>
+    <label class="mon-check"><input type="checkbox" id="chk-casa" checked> <span class="mon-punto" style="background:#dc2626"></span> Casa</label>
+  </div>
+
+  <div class="mon-grupo" role="group" aria-label="Acciones">
+    <button type="button" id="btn-actualizar" class="mon-btn">Actualizar</button>
+    <button type="button" id="btn-zoom-reset" class="mon-btn">Reset zoom</button>
+    <button type="button" id="btn-csv" class="mon-btn">Exportar CSV</button>
+  </div>
+
+</section>
+
+<p class="mon-meta">
+  <span id="mon-periodo">Cargando…</span>
+  <span class="mon-sep">•</span>
+  <span id="mon-actualizado">—</span>
+</p>
+
+<!-- ===================== AVISOS ===================== -->
+<div id="mon-aviso" class="mon-estado mon-estado--info" role="status" aria-live="polite">Cargando datos…</div>
+<div id="mon-estado-shelly" class="mon-estado mon-estado--info" role="status" aria-live="polite" hidden></div>
+
+<!-- ===================== TARJETAS ===================== -->
+<div class="mon-tarjetas">
+
+  <section class="tarjeta mon-tarjeta" aria-labelledby="h-actual">
+    <h2 id="h-actual" class="mon-titulo">Situación actual</h2>
+    <p class="mon-subtitulo">Última lectura en BBDD desde <code>/api/latest</code>.</p>
+    <ul class="mon-lista-valores">
+      <li><span class="mon-punto" style="background:#16a34a"></span><span class="mon-clave">Aerotermia</span><span class="mon-valor" id="mon-act-aero">—</span></li>
+      <li><span class="mon-punto" style="background:#2563eb"></span><span class="mon-clave">Resto vivienda</span><span class="mon-valor" id="mon-act-resto">—</span></li>
+      <li><span class="mon-punto" style="background:#dc2626"></span><span class="mon-clave">Casa (total)</span><span class="mon-valor" id="mon-act-casa">—</span></li>
+    </ul>
+    <p class="mon-pie-tarjeta">Fecha del dato: <strong id="mon-act-fecha">—</strong></p>
+  </section>
+
+  <section class="tarjeta mon-tarjeta" aria-labelledby="h-stats">
+    <h2 id="h-stats" class="mon-titulo">Estadísticas del periodo</h2>
+    <p class="mon-subtitulo">Calculadas sobre los puntos del gráfico. kWh = último Wh − primero Wh.</p>
+    <div class="mon-tabla-scroll">
+      <table class="mon-tabla">
+        <thead>
+          <tr><th>Serie</th><th>Mínimo</th><th>Máximo</th><th>Media</th><th>Energía</th></tr>
+        </thead>
+        <tbody>
+          <tr><th><span class="mon-punto" style="background:#16a34a"></span>Aerotermia</th><td id="mon-st-aero-min">—</td><td id="mon-st-aero-max">—</td><td id="mon-st-aero-med">—</td><td id="mon-st-aero-kwh">—</td></tr>
+          <tr><th><span class="mon-punto" style="background:#2563eb"></span>Resto</th><td id="mon-st-resto-min">—</td><td id="mon-st-resto-max">—</td><td id="mon-st-resto-med">—</td><td id="mon-st-resto-kwh">—</td></tr>
+          <tr><th><span class="mon-punto" style="background:#dc2626"></span>Casa</th><td id="mon-st-casa-min">—</td><td id="mon-st-casa-max">—</td><td id="mon-st-casa-med">—</td><td id="mon-st-casa-kwh">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mon-pie-tarjeta" id="mon-nota-energia">Energía por contador acumulado del Shelly.</p>
+  </section>
+
+</div>
+
+<!-- ===================== GRÁFICO ===================== -->
+<section class="tarjeta mon-tarjeta mon-tarjeta--grafico" aria-labelledby="h-graf">
+  <h2 id="h-graf" class="mon-titulo">Potencia instantánea (W)</h2>
+  <div class="mon-grafico-caja">
+    <canvas id="mon-grafico" role="img" aria-label="Gráfico de potencia aerotermia, resto y casa total"></canvas>
+  </div>
+  <p class="mon-pie-tarjeta">Rueda: zoom X. Arrastre: desplazamiento. Huecos = sin datos &gt;2 min (null). Línea escalonada, sin marcadores, mínimo sugerido 0.</p>
+</section>
+
+<details class="mon-notas">
+  <summary>Notas metodológicas</summary>
+  <ul>
+    <li><strong>Fuente:</strong> solo Worker <code>/api/range?start=&amp;end=&amp;bucket=raw</code> y <code>/api/latest</code>. No hay acceso a <code>192.168.0.62</code> ni a Shelly Cloud desde el navegador.</li>
+    <li><strong>Tiempo:</strong> época en ms UTC. El conmutador UTC/Local solo cambia presentación mediante desplazamiento del eje X.</li>
+    <li><strong>Resto:</strong> Casa − Aerotermia. Negativos visibles. No recorte a 0.</li>
+    <li><strong>Gaps:</strong> si Δt &gt;2 min se inyecta punto null solo para Chart.js. Los datos originales, estadísticas y CSV no contienen ese punto.</li>
+    <li><strong>Refresco:</strong> solo en Últimas 24 h, cada 60 s, incremental (<code>start=ultimoTimestamp+1</code>). Mantiene zoom y scroll.</li>
+    <li><strong>Energía:</strong> (<code>wh_total último − primero</code>)/1000. Se marca no fiable si resultado &lt;0 (posible reinicio contador).</li>
+    <li><strong>Cache:</strong> Worker responde con <code>Cache-Control: public, max-age=30</code> en <code>/api/range</code>.</li>
+  </ul>
+</details>
+
+<!-- ===================== LIBRERÍAS CDN jsDelivr - versiones fijadas ===================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<!-- Nuestro código -->
+<script src="/assets/js/shelly-monitor.js"></script>

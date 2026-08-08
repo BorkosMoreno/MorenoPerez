@@ -5,7 +5,7 @@ layout: layouts/base.njk
   <header class="proyecto-header">
     <span class="proyecto-categoria-etiqueta">{{ categoria }}</span>
     <h1 class="proyecto-titulo">{{ title }}</h1>
-    {% if descripcion %}
+    {% if description %}
       <p class="proyecto-sinopsis">{{ description }}</p>
     {% endif %}
   </header>
@@ -17,6 +17,6 @@ layout: layouts/base.njk
   </div>
 
   <footer class="proyecto-retorno-footer">
-    <a href="/index.html#proyectos" class="btn-retorno">? Volver a Proyectos</a>
+    <a href="/index.html#proyectos" class="btn-retorno">← Volver a Proyectos</a>
   </footer>
 </article>

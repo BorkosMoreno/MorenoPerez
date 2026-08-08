@@ -1,43 +1,1136 @@
 ---
 layout: layouts/proyecto.njk
-title: Monitores Eléctricos (Shelly BIP30) - P1
-description: Página P1 del proyecto de monitorización eléctrica con Shelly BIP30.
+title: Monitor Eléctrico Shelly EM (P1) gemini-3.6-flash
+description: Monitorización en tiempo real del consumo de aerotermia y total de la vivienda desde Cloudflare D1 gemini-3.6-flash.
 categoria: Domótica
 ---
 
-<p>Datos de consumo acumulados e instantáneos de la vivienda. Los gráficos se generan dinámicamente utilizando la librería Chart.js a partir de datos estructurados.</p>
+<!-- ==========================================================================
+   ESTILOS ESPECÍFICOS DEL MONITOR
+   Aprovechan las variables globales definidas en /assets/css/estilos.css
+   ========================================================================== -->
+<style>
+  .p1-contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
 
-<!-- Contenedor para el gráfico de prueba -->
-<div class="tarjeta" style="margin: 2rem 0; max-width: 800px;">
-  <canvas id="graficoConsumo" width="400" height="200" aria-label="Gráfico de consumo eléctrico" role="img"></canvas>
+  /* BARRA DE CONTROLES DE LA GRÁFICA Y FILTROS */
+  .p1-barras-controles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background-color: var(--gris-claro);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .p1-grupo-control {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .p1-etiqueta-control {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primario-claro);
+    margin-right: 0.25rem;
+  }
+
+  .p1-btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secundario);
+    background-color: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .p1-btn:hover:not(:disabled) {
+    background-color: var(--gris-claro);
+    color: var(--primario);
+    border-color: var(--primario-claro);
+  }
+
+  .p1-btn:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .p1-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .p1-btn--activo {
+    background-color: var(--primario);
+    border-color: var(--primario);
+    color: var(--blanco);
+  }
+
+  .p1-btn--activo:hover:not(:disabled) {
+    background-color: var(--primario);
+    color: var(--blanco);
+  }
+
+  .p1-input-fecha {
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    background-color: var(--blanco);
+    color: var(--secundario);
+  }
+
+  .p1-checkbox-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+  }
+
+  .p1-checkbox-label:hover {
+    background-color: var(--blanco);
+    border-color: var(--gris-borde);
+  }
+
+  /* TARJETAS SUPERIORES DE INFORMACIÓN */
+  .p1-grid-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .p1-tarjeta {
+    background-color: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .p1-tarjeta-titulo {
+    font-size: 1.1rem;
+    color: var(--primario);
+    margin-bottom: 0.25rem;
+  }
+
+  .p1-tarjeta-subtitulo {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+  }
+
+  .p1-lista-actual {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .p1-item-actual {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--gris-borde);
+    padding-bottom: 0.5rem;
+  }
+
+  .p1-item-actual:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .p1-indicador-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .p1-valor-destacado {
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--primario);
+  }
+
+  /* TABLA DE ESTADÍSTICAS */
+  .p1-tabla-contenedor {
+    overflow-x: auto;
+  }
+
+  .p1-tabla-stats {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .p1-tabla-stats th,
+  .p1-tabla-stats td {
+    padding: 0.5rem;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .p1-tabla-stats thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--primario-claro);
+    border-bottom: 2px solid var(--gris-borde);
+  }
+
+  .p1-tabla-stats tbody th {
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .p1-tabla-stats tbody tr {
+    border-bottom: 1px solid var(--gris-borde);
+  }
+
+  .p1-tabla-stats tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .p1-subtexto-tabla {
+    display: block;
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: normal;
+  }
+
+  .p1-no-fiable {
+    color: #dc2626;
+    font-weight: bold;
+  }
+
+  /* ESTADOS DE AVISO Y CONEXIÓN */
+  .p1-banner-estado {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .p1-banner-estado--ok {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+  }
+
+  .p1-banner-estado--aviso {
+    background-color: #fefce8;
+    border-color: #fde68a;
+    color: #854d0e;
+  }
+
+  .p1-banner-estado--error {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  /* CAJA DE LA GRÁFICA CANVA */
+  .p1-caja-grafico {
+    position: relative;
+    width: 100%;
+    height: 420px;
+  }
+
+  .p1-pie-grafico {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .p1-caja-grafico {
+      height: 300px;
+    }
+    .p1-barras-controles {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .p1-grupo-control {
+      justify-content: space-between;
+    }
+  }
+</style>
+
+<div class="p1-contenedor">
+
+  <!-- BANNER DE ESTADO Y CONEXIÓN CON SHELLY/WORKER -->
+  <div id="p1-estado-shelly" class="p1-banner-estado p1-banner-estado--ok" role="status" aria-live="polite">
+    Consultando estado de conexión con el Worker...
+  </div>
+
+  <!-- TARJETAS INFORMATIVAS (A Y B) -->
+  <div class="p1-grid-tarjetas">
+
+    <!-- TARJETA A: SITUACIÓN ACTUAL -->
+    <section class="p1-tarjeta" aria-labelledby="p1-titulo-actual">
+      <h2 id="p1-titulo-actual" class="p1-tarjeta-titulo">Situación actual</h2>
+      <p class="p1-tarjeta-subtitulo">Última lectura guardada en la base de datos.</p>
+      
+      <ul class="p1-lista-actual">
+        <li class="p1-item-actual">
+          <div>
+            <span class="p1-indicador-color" style="background-color: #16a34a;"></span>
+            <span style="font-weight: 600;">Aerotermia</span>
+          </div>
+          <span class="p1-valor-destacado" id="p1-act-aero">— W</span>
+        </li>
+        <li class="p1-item-actual">
+          <div>
+            <span class="p1-indicador-color" style="background-color: #2563eb;"></span>
+            <span style="font-weight: 600;">Resto vivienda</span>
+          </div>
+          <span class="p1-valor-destacado" id="p1-act-resto">— W</span>
+        </li>
+        <li class="p1-item-actual">
+          <div>
+            <span class="p1-indicador-color" style="background-color: #dc2626;"></span>
+            <span style="font-weight: 600;">Casa (Total)</span>
+          </div>
+          <span class="p1-valor-destacado" id="p1-act-casa">— W</span>
+        </li>
+      </ul>
+
+      <p style="font-size: 0.78rem; color: #64748b; margin-top: 1rem;">
+        Hora de la muestra: <strong id="p1-act-fecha">—</strong>
+      </p>
+    </section>
+
+    <!-- TARJETA B: ESTADÍSTICAS DEL PERIODO SELECCIONADO -->
+    <section class="p1-tarjeta" aria-labelledby="p1-titulo-stats">
+      <h2 id="p1-titulo-stats" class="p1-tarjeta-titulo">Estadísticas del periodo</h2>
+      <p class="p1-tarjeta-subtitulo">Valores calculados sobre el rango visible.</p>
+
+      <div class="p1-tabla-contenedor">
+        <table class="p1-tabla-stats">
+          <thead>
+            <tr>
+              <th scope="col">Serie</th>
+              <th scope="col">Mínimo</th>
+              <th scope="col">Máximo</th>
+              <th scope="col">Media</th>
+              <th scope="col">Energía</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                <span class="p1-indicador-color" style="background-color: #16a34a;"></span>Aerotermia
+              </th>
+              <td id="p1-st-aero-min">—</td>
+              <td id="p1-st-aero-max">—</td>
+              <td id="p1-st-aero-med">—</td>
+              <td id="p1-st-aero-kwh">—</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <span class="p1-indicador-color" style="background-color: #2563eb;"></span>Resto
+              </th>
+              <td id="p1-st-resto-min">—</td>
+              <td id="p1-st-resto-max">—</td>
+              <td id="p1-st-resto-med">—</td>
+              <td id="p1-st-resto-kwh">—</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <span class="p1-indicador-color" style="background-color: #dc2626;"></span>Casa Total
+              </th>
+              <td id="p1-st-casa-min">—</td>
+              <td id="p1-st-casa-max">—</td>
+              <td id="p1-st-casa-med">—</td>
+              <td id="p1-st-casa-kwh">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.75rem;" id="p1-nota-kwh">
+        Energía = contador acumulado (último − primero del periodo).
+      </p>
+    </section>
+
+  </div>
+
+  <!-- BARRA SUPERIOR DE CONTROLES E INTERACCIÓN -->
+  <section class="p1-barras-controles" aria-label="Controles de visualización">
+
+    <!-- SELECTOR DE LÍNEAS VISIBLES -->
+    <div class="p1-grupo-control">
+      <span class="p1-etiqueta-control">Ver:</span>
+      <label class="p1-checkbox-label">
+        <input type="checkbox" id="p1-chk-aero" checked>
+        <span style="color: #16a34a;">Aerotermia</span>
+      </label>
+      <label class="p1-checkbox-label">
+        <input type="checkbox" id="p1-chk-resto" checked>
+        <span style="color: #2563eb;">Resto</span>
+      </label>
+      <label class="p1-checkbox-label">
+        <input type="checkbox" id="p1-chk-casa" checked>
+        <span style="color: #dc2626;">Casa</span>
+      </label>
+    </div>
+
+    <!-- MODO DE TIEMPO Y ZONA HORARIA -->
+    <div class="p1-grupo-control">
+      <button type="button" id="p1-btn-vivo" class="p1-btn p1-btn--activo">Últimas 24h</button>
+      
+      <div style="display: flex; align-items: center; gap: 0.2rem;">
+        <button type="button" id="p1-btn-dia-ant" class="p1-btn" title="Día anterior">◄</button>
+        <input type="date" id="p1-input-fecha" class="p1-input-fecha">
+        <button type="button" id="p1-btn-dia-sig" class="p1-btn" title="Día siguiente">►</button>
+      </div>
+
+      <span class="p1-etiqueta-control" style="margin-left: 0.5rem;">Zona:</span>
+      <button type="button" id="p1-btn-tz-utc" class="p1-btn p1-btn--activo">UTC</button>
+      <button type="button" id="p1-btn-tz-local" class="p1-btn">Local</button>
+    </div>
+
+    <!-- ACCIONES EXTRA -->
+    <div class="p1-grupo-control">
+      <button type="button" id="p1-btn-reset-zoom" class="p1-btn">Restablecer Zoom</button>
+      <button type="button" id="p1-btn-csv" class="p1-btn">Exportar CSV</button>
+    </div>
+
+  </section>
+
+  <!-- SECCIÓN DE LA GRÁFICA DE CONSUMO -->
+  <section class="p1-tarjeta" aria-label="Gráfica de potencia instantánea">
+    <div class="p1-caja-grafico">
+      <canvas id="p1-canvas-grafico" role="img" aria-label="Gráfico de consumo eléctrico"></canvas>
+    </div>
+    <div class="p1-pie-grafico">
+      <span>Usa la rueda del ratón o pellizco en táctil para zoom horizontal. Arrastra para desplazar.</span>
+      <span id="p1-indicador-refresco">Sin actualizar aún</span>
+    </div>
+  </section>
+
 </div>
 
-<!-- Carga de Chart.js únicamente en esta página -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+<!-- CORTAFUEGOS PARA DESACTIVACIÓN DE JAVASCRIPT -->
+<noscript>
+  <div class="p1-banner-estado p1-banner-estado--error" style="margin-top: 1rem;">
+    Esta página requiere JavaScript activo para consultar la base de datos D1 y renderizar el gráfico interactivo.
+  </div>
+</noscript>
 
+<!-- LIBRERÍAS EXTERNAS (CDN jsDelivr) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+<!-- ==========================================================================
+   LÓGICA JAVASCRIPT DEL MONITOR (Encapsulada en raw para Eleventy/Nunjucks)
+   ========================================================================== -->
+{% raw %}
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const ctx = document.getElementById('graficoConsumo').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
+(function () {
+  'use strict';
+
+  /* =========================================================================
+     1. CONSTANTES Y CONFIGURACIÓN BASE
+     ========================================================================= */
+  var WORKER_BASE_URL = 'https://worker-monitor-shelly-aerotermia.borkosmoreno.workers.dev';
+  var INTERVALO_REFRESCO_MS = 60000;  // Refresco cada 60 segundos
+  var MAX_GAPS_PERMITIDO_MS  = 120000; // > 2 min entre registros genera un corte (null)
+  var LIMITE_STALE_AVISO_S  = 180;    // > 3 minutos sin datos (amarillo)
+  var LIMITE_STALE_ERROR_S  = 900;    // > 15 minutos sin datos (rojo)
+
+  var COLORES = {
+    aero: '#16a34a',  // Verde
+    resto: '#2563eb', // Azul
+    casa: '#dc2626'   // Rojo
+  };
+
+  /* =========================================================================
+     2. ESTADO INTERNO DE LA APLICACIÓN
+     ========================================================================= */
+  var estado = {
+    modoVivo: true,         // true = Últimas 24h dinámicas; false = Día específico
+    fechaSeleccionada: '',  // 'YYYY-MM-DD' en UTC
+    modoUTC: true,          // true = Eje en UTC; false = Hora Local del navegador
+    registros: [],          // Array ordenado de lecturas: [{ t, aeroW, aeroWh, casaW, casaWh }]
+    ultimoRegistro: null,   // Última muestra obtenida del backend
+    instanteUltimoOk: null, // Timestamp local del último fetch con éxito
+    instanciaGrafico: null,
+    temporizadorRefresco: null,
+    cargando: false
+  };
+
+  /* =========================================================================
+     3. FORMATEADORES DE NÚMEROS Y FECHAS
+     ========================================================================= */
+  var fmtW = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 });
+  var fmtKWh = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+  // Convierte timestamp en texto formateado respetando el conmutador UTC/Local
+  function formatearFechaHora(epochMs) {
+    if (!Number.isFinite(epochMs)) return '—';
+    var opciones = {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    };
+    if (estado.modoUTC) opciones.timeZone = 'UTC';
+    return new Intl.DateTimeFormat('es-ES', opciones).format(new Date(epochMs)) + (estado.modoUTC ? ' UTC' : '');
+  }
+
+  function formatearHoraCorta(epochMs) {
+    if (!Number.isFinite(epochMs)) return '—';
+    var opciones = { hour: '2-digit', minute: '2-digit', hour12: false };
+    if (estado.modoUTC) opciones.timeZone = 'UTC';
+    return new Intl.DateTimeFormat('es-ES', opciones).format(new Date(epochMs));
+  }
+
+  // Transformación de fechas para corregir el renderizado gráfico de Chart.js Adapter
+  function aplicarOffsetZonaHoraria(rawMs) {
+    if (!estado.modoUTC) return rawMs;
+    // Traslada visualmente la hora UTC para coincidir con la escala del adaptador local
+    return rawMs + new Date(rawMs).getTimezoneOffset() * 60000;
+  }
+
+  function obtenerHoyUTC() {
+    var d = new Date();
+    var y = d.getUTCFullYear();
+    var m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    var dia = String(d.getUTCDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dia;
+  }
+
+  function sumarDiasAFechaUTC(strYmd, numDias) {
+    var partes = strYmd.split('-');
+    var base = Date.UTC(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+    var resultante = new Date(base + numDias * 86400000);
+    var y = resultante.getUTCFullYear();
+    var m = String(resultante.getUTCMonth() + 1).padStart(2, '0');
+    var dia = String(resultante.getUTCDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dia;
+  }
+
+  /* =========================================================================
+     4. PETICIONES A LA API DEL WORKER
+     ========================================================================= */
+  
+  // Realiza la llamada al endpoint /api/range que trae ambos canales en una sola petición
+  function consultarRangoWorker(desdeMs, hastaMs) {
+    var url = new URL(WORKER_BASE_URL + '/api/range');
+    url.searchParams.set('start', new Date(desdeMs).toISOString());
+    url.searchParams.set('end', new Date(hastaMs).toISOString());
+    url.searchParams.set('bucket', 'auto'); // 1 min para <=48h
+
+    return fetch(url.toString(), { headers: { 'Accept': 'application/json' } })
+      .then(function (respuesta) {
+        if (!respuesta.ok) {
+          throw new Error('HTTP ' + respuesta.status);
+        }
+        return respuesta.json();
+      })
+      .then(function (json) {
+        if (!json || json.success !== true) {
+          throw new Error((json && json.error) ? json.error : 'Respuesta errónea del Worker');
+        }
+        return json;
+      });
+  }
+
+  /* =========================================================================
+     5. LÓGICA DE CARGA Y PROCESAMIENTO DE DATOS
+     ========================================================================= */
+
+  function cargarDatosCompletos() {
+    if (estado.cargando) return;
+    estado.cargando = true;
+
+    var desdeMs, hastaMs;
+    var ahora = Date.now();
+
+    if (estado.modoVivo) {
+      desdeMs = ahora - (24 * 3600 * 1000);
+      hastaMs = ahora;
+    } else {
+      var p = estado.fechaSeleccionada.split('-');
+      desdeMs = Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 0, 0, 0, 0);
+      hastaMs = desdeMs + 86400000 - 1;
+    }
+
+    consultarRangoWorker(desdeMs, hastaMs)
+      .then(function (res) {
+        // Formatear filas recibidas
+        estado.registros = (res.data || []).map(function (item) {
+          return {
+            t: Number(item.t),
+            aeroW: item.aeroW,
+            aeroWh: item.aeroWh,
+            casaW: item.casaW,
+            casaWh: item.casaWh
+          };
+        }).sort(function (a, b) { return a.t - b.t; });
+
+        estado.ultimoRegistro = res.latest || null;
+        estado.instanteUltimoOk = Date.now();
+
+        renderizarPantalla();
+      })
+      .catch(function (error) {
+        mostrarErrorConexion(error.message);
+      })
+      .then(function () {
+        estado.cargando = false;
+      });
+  }
+
+  // Refresco incremental cada 60s en modo vivo (sin parpadeos)
+  function cargarRefrescoIncremental() {
+    if (estado.cargando || !estado.modoVivo) return;
+    
+    if (estado.registros.length === 0) {
+      cargarDatosCompletos();
+      return;
+    }
+
+    var ultimoTs = estado.registros[estado.registros.length - 1].t;
+    var desdeMs = ultimoTs + 1;
+    var hastaMs = Date.now();
+
+    if (hastaMs <= desdeMs) {
+      actualizarBarraEstadoShelly();
+      return;
+    }
+
+    estado.cargando = true;
+
+    consultarRangoWorker(desdeMs, hastaMs)
+      .then(function (res) {
+        var nuevos = (res.data || []).map(function (item) {
+          return {
+            t: Number(item.t),
+            aeroW: item.aeroW,
+            aeroWh: item.aeroWh,
+            casaW: item.casaW,
+            casaWh: item.casaWh
+          };
+        });
+
+        if (nuevos.length > 0) {
+          estado.registros = estado.registros.concat(nuevos);
+          // Purga registros más antiguos que 24 horas para mantener la ventana limpia
+          var corte = Date.now() - (24 * 3600 * 1000);
+          estado.registros = estado.registros.filter(function (r) { return r.t >= corte; });
+        }
+
+        if (res.latest) {
+          estado.ultimoRegistro = res.latest;
+        }
+
+        estado.instanteUltimoOk = Date.now();
+        renderizarPantalla();
+      })
+      .catch(function (error) {
+        mostrarErrorConexion(error.message);
+      })
+      .then(function () {
+        estado.cargando = false;
+      });
+  }
+
+  /* =========================================================================
+     6. TRANSFORMACIÓN DE SERIES Y DETECCIÓN DE HUECOS (GAPS)
+     ========================================================================= */
+  
+  // Procesa el array inyectando puntos "null" cuando hay saltos > 2 min entre registros
+  function procesarSeriesParaGrafico() {
+    var serieAero = [];
+    var serieResto = [];
+    var serieCasa = [];
+    var prevT = null;
+
+    estado.registros.forEach(function (r) {
+      // Detección de brecha temporal
+      if (prevT !== null && (r.t - prevT) > MAX_GAPS_PERMITIDO_MS) {
+        var tHueco = aplicarOffsetZonaHoraria(prevT + 60000);
+        serieAero.push({ x: tHueco, y: null });
+        serieResto.push({ x: tHueco, y: null });
+        serieCasa.push({ x: tHueco, y: null });
+      }
+
+      var xDisplay = aplicarOffsetZonaHoraria(r.t);
+      var wAero = Number.isFinite(r.aeroW) ? r.aeroW : null;
+      var wCasa = Number.isFinite(r.casaW) ? r.casaW : null;
+      // Resto vivienda = Casa - Aerotermia (Se mantiene el valor real aunque sea negativo)
+      var wResto = (wAero !== null && wCasa !== null) ? (wCasa - wAero) : null;
+
+      serieAero.push({ x: xDisplay, y: wAero, tReal: r.t });
+      serieResto.push({ x: xDisplay, y: wResto, tReal: r.t });
+      serieCasa.push({ x: xDisplay, y: wCasa, tReal: r.t });
+
+      prevT = r.t;
+    });
+
+    return { aero: serieAero, resto: serieResto, casa: serieCasa };
+  }
+
+  /* =========================================================================
+     7. CONSTRUCCIÓN Y GESTIÓN DE CHART.JS
+     ========================================================================= */
+
+  function inicializarGrafico() {
+    if (typeof Chart === 'undefined') return;
+
+    var ctx = document.getElementById('p1-canvas-grafico').getContext('2d');
+
+    estado.instanciaGrafico = new Chart(ctx, {
+      type: 'line',
       data: {
-        labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-        datasets: [{
-          label: 'Consumo Diario (kWh)',
-          data: [12.5, 14.2, 11.8, 15.1, 10.3, 8.5, 9.1],
-          backgroundColor: 'rgba(30, 58, 138, 0.7)',
-          borderColor: 'rgba(30, 58, 138, 1)',
-          borderWidth: 1
-        }]
+        datasets: [
+          {
+            label: 'Aerotermia',
+            data: [],
+            borderColor: COLORES.aero,
+            backgroundColor: COLORES.aero,
+            borderWidth: 1.8,
+            stepped: true, // Línea escalonada para lecturas discretas por minuto
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            spanGaps: false // Fuerza la rotura visual cuando encuentra un y: null
+          },
+          {
+            label: 'Resto vivienda',
+            data: [],
+            borderColor: COLORES.resto,
+            backgroundColor: COLORES.resto,
+            borderWidth: 1.8,
+            stepped: true,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            spanGaps: false
+          },
+          {
+            label: 'Casa Total',
+            data: [],
+            borderColor: COLORES.casa,
+            backgroundColor: COLORES.casa,
+            borderWidth: 1.8,
+            stepped: true,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            spanGaps: false
+          }
+        ]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
         scales: {
+          x: {
+            type: 'time',
+            time: { displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'dd/MM' } },
+            title: { display: true, text: 'Tiempo (UTC)' },
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          },
           y: {
-            beginAtZero: true
+            suggestedMin: 0, // Inicia preferentemente en 0 pero permite valores negativos si ocurren
+            title: { display: true, text: 'Potencia Instantánea (W)' },
+            ticks: { callback: function (v) { return fmtW.format(v) + ' W'; } },
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          }
+        },
+        plugins: {
+          legend: { display: false }, // Se usan los checkboxes propios como control
+          tooltip: {
+            callbacks: {
+              title: function (items) {
+                if (!items.length) return '';
+                var tReal = items[0].raw && items[0].raw.tReal;
+                return Number.isFinite(tReal) ? formatearFechaHora(tReal) : '';
+              },
+              label: function (item) {
+                var v = item.parsed.y;
+                return item.dataset.label + ': ' + (v === null ? 'Sin datos' : fmtW.format(v) + ' W');
+              }
+            }
+          },
+          zoom: {
+            pan: { enabled: true, mode: 'x' },
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
           }
         }
       }
     });
-  });
+  }
+
+  /* =========================================================================
+     8. CÁLCULO Y RENDERIZADO DE VISTAS Y TARJETAS
+     ========================================================================= */
+
+  function renderizarPantalla() {
+    if (!estado.instanciaGrafico) return;
+
+    // A. Actualizar Gráfica
+    var series = procesarSeriesParaGrafico();
+    estado.instanciaGrafico.data.datasets[0].data = series.aero;
+    estado.instanciaGrafico.data.datasets[1].data = series.resto;
+    estado.instanciaGrafico.data.datasets[2].data = series.casa;
+
+    // Aplicar visibilidad según checkboxes
+    estado.instanciaGrafico.data.datasets[0].hidden = !document.getElementById('p1-chk-aero').checked;
+    estado.instanciaGrafico.data.datasets[1].hidden = !document.getElementById('p1-chk-resto').checked;
+    estado.instanciaGrafico.data.datasets[2].hidden = !document.getElementById('p1-chk-casa').checked;
+
+    estado.instanciaGrafico.options.scales.x.title.text = estado.modoUTC ? 'Tiempo (UTC)' : 'Tiempo (Hora Local)';
+    estado.instanciaGrafico.update('none');
+
+    // B. Tarjeta (A): Situación Actual
+    renderizarTarjetaActual();
+
+    // C. Tarjeta (B): Estadísticas
+    renderizarTablaEstadisticas();
+
+    // D. Estado de Conexión y Temporizadores
+    actualizarBarraEstadoShelly();
+    actualizarIndicadorRefresco();
+  }
+
+  function renderizarTarjetaActual() {
+    if (!estado.ultimoRegistro) {
+      document.getElementById('p1-act-aero').textContent = '—';
+      document.getElementById('p1-act-resto').textContent = '—';
+      document.getElementById('p1-act-casa').textContent = '—';
+      document.getElementById('p1-act-fecha').textContent = '—';
+      return;
+    }
+
+    var rec = estado.ultimoRegistro;
+    var wAero = rec.aerotermiaW;
+    var wCasa = rec.casaTotalW;
+    var wResto = (Number.isFinite(wAero) && Number.isFinite(wCasa)) ? (wCasa - wAero) : null;
+
+    document.getElementById('p1-act-aero').textContent = Number.isFinite(wAero) ? (fmtW.format(wAero) + ' W') : '—';
+    document.getElementById('p1-act-resto').textContent = Number.isFinite(wResto) ? (fmtW.format(wResto) + ' W') : '—';
+    document.getElementById('p1-act-casa').textContent = Number.isFinite(wCasa) ? (fmtW.format(wCasa) + ' W') : '—';
+    document.getElementById('p1-act-fecha').textContent = formatearFechaHora(rec.timestamp);
+  }
+
+  function calcularStatsCanal(fnValor) {
+    var min = Infinity, minT = null;
+    var max = -Infinity, maxT = null;
+    var suma = 0, cuenta = 0;
+
+    estado.registros.forEach(function (r) {
+      var v = fnValor(r);
+      if (!Number.isFinite(v)) return;
+      cuenta++;
+      suma += v;
+      if (v < min) { min = v; minT = r.t; }
+      if (v > max) { max = v; maxT = r.t; }
+    });
+
+    if (cuenta === 0) return null;
+    return { min: min, minT: minT, max: max, maxT: maxT, media: suma / cuenta };
+  }
+
+  function calcularEnergiaKWh(propWh) {
+    var prim = null, ult = null;
+    estado.registros.forEach(function (r) {
+      var v = r[propWh];
+      if (!Number.isFinite(v)) return;
+      if (prim === null) prim = v;
+      ult = v;
+    });
+    if (prim === null || ult === null) return null;
+    return (ult - prim) / 1000; // Wh a kWh
+  }
+
+  function renderizarTablaEstadisticas() {
+    var stAero = calcularStatsCanal(function (r) { return r.aeroW; });
+    var stCasa = calcularStatsCanal(function (r) { return r.casaW; });
+    var stResto = calcularStatsCanal(function (r) {
+      return (Number.isFinite(r.casaW) && Number.isFinite(r.aeroW)) ? (r.casaW - r.aeroW) : NaN;
+    });
+
+    var kWhAero = calcularEnergiaKWh('aeroWh');
+    var kWhCasa = calcularEnergiaKWh('casaWh');
+    var kWhResto = (kWhAero !== null && kWhCasa !== null) ? (kWhCasa - kWhAero) : null;
+
+    pintaFilaStat('aero', stAero, kWhAero);
+    pintaFilaStat('resto', stResto, kWhResto);
+    pintaFilaStat('casa', stCasa, kWhCasa);
+
+    // Detección de anomalías en contadores (p.ej., reinicio de Shelly)
+    var notaEl = document.getElementById('p1-nota-kwh');
+    if ((kWhAero !== null && kWhAero < 0) || (kWhCasa !== null && kWhCasa < 0)) {
+      notaEl.innerHTML = 'Energía = contador acumulado. <span class="p1-no-fiable">Se detectó un valor negativo (contador reiniciado).</span>';
+    } else {
+      notaEl.textContent = 'Energía = contador acumulado (último − primero del periodo).';
+    }
+  }
+
+  function pintaFilaStat(id, st, kWh) {
+    var elMin = document.getElementById('p1-st-' + id + '-min');
+    var elMax = document.getElementById('p1-st-' + id + '-max');
+    var elMed = document.getElementById('p1-st-' + id + '-med');
+    var elKWh = document.getElementById('p1-st-' + id + '-kwh');
+
+    if (!st) {
+      elMin.textContent = '—'; elMax.textContent = '—'; elMed.textContent = '—'; elKWh.textContent = '—';
+      return;
+    }
+
+    elMin.innerHTML = fmtW.format(st.min) + ' W <span class="p1-subtexto-tabla">' + formatearHoraCorta(st.minT) + '</span>';
+    elMax.innerHTML = fmtW.format(st.max) + ' W <span class="p1-subtexto-tabla">' + formatearHoraCorta(st.maxT) + '</span>';
+    elMed.textContent = fmtW.format(st.media) + ' W';
+
+    if (kWh === null) {
+      elKWh.textContent = '—';
+    } else if (kWh < 0) {
+      elKWh.innerHTML = '<span class="p1-no-fiable">' + fmtKWh.format(kWh) + ' kWh</span>';
+    } else {
+      elKWh.textContent = fmtKWh.format(kWh) + ' kWh';
+    }
+  }
+
+  function actualizarBarraEstadoShelly() {
+    var banner = document.getElementById('p1-estado-shelly');
+    
+    if (!estado.ultimoRegistro || !Number.isFinite(estado.ultimoRegistro.timestamp)) {
+      banner.className = 'p1-banner-estado p1-banner-estado--aviso';
+      banner.textContent = 'No hay datos disponibles en el Worker.';
+      return;
+    }
+
+    var tsMuestra = estado.ultimoRegistro.timestamp;
+    var segsTranscurridos = Math.max(0, Math.round((Date.now() - tsMuestra) / 1000));
+    var minsTranscurridos = Math.floor(segsTranscurridos / 60);
+
+    banner.classList.remove('p1-banner-estado--ok', 'p1-banner-estado--aviso', 'p1-banner-estado--error');
+
+    if (segsTranscurridos <= LIMITE_STALE_AVISO_S) {
+      banner.classList.add('p1-banner-estado--ok');
+      banner.textContent = 'Shelly operando con normalidad. Última lectura: ' + formatearFechaHora(tsMuestra);
+    } else if (segsTranscurridos <= LIMITE_STALE_ERROR_S) {
+      banner.classList.add('p1-banner-estado--aviso');
+      banner.textContent = 'Sin datos nuevos desde hace ' + minsTranscurridos + ' min (última lectura: ' + formatearFechaHora(tsMuestra) + ').';
+    } else {
+      banner.classList.add('p1-banner-estado--error');
+      banner.textContent = 'El Shelly lleva ' + minsTranscurridos + ' minutos sin enviar datos (última lectura: ' + formatearFechaHora(tsMuestra) + ').';
+    }
+  }
+
+  function actualizarIndicadorRefresco() {
+    var el = document.getElementById('p1-indicador-refresco');
+    if (!estado.instanteUltimoOk) {
+      el.textContent = 'Sin actualizar aún';
+      return;
+    }
+    var s = Math.max(0, Math.round((Date.now() - estado.instanteUltimoOk) / 1000));
+    el.textContent = 'Actualizado hace ' + s + ' s';
+  }
+
+  function mostrarErrorConexion(msg) {
+    var banner = document.getElementById('p1-estado-shelly');
+    banner.className = 'p1-banner-estado p1-banner-estado--error';
+    banner.textContent = 'Error de conexión: El Worker no responde (' + msg + ').';
+  }
+
+  /* =========================================================================
+     9. EXPORTACIÓN A CSV
+     ========================================================================= */
+
+  function exportarDatosCSV() {
+    if (estado.registros.length === 0) {
+      alert('No hay datos disponibles para exportar.');
+      return;
+    }
+
+    var cabecera = ['Timestamp_ms', 'Fecha_UTC', 'Fecha_Local', 'Aerotermia_W', 'Resto_W', 'Casa_Total_W', 'Aerotermia_Wh', 'Casa_Wh'];
+    var lineas = [cabecera.join(';')];
+
+    estado.registros.forEach(function (r) {
+      var d = new Date(r.t);
+      var strISO = d.toISOString();
+      var strLocal = d.toLocaleString('es-ES');
+      var wResto = (Number.isFinite(r.casaW) && Number.isFinite(r.aeroW)) ? (r.casaW - r.aeroW) : '';
+
+      var fila = [
+        r.t,
+        strISO,
+        '"' + strLocal + '"',
+        r.aeroW !== null ? String(r.aeroW).replace('.', ',') : '',
+        wResto !== '' ? String(wResto).replace('.', ',') : '',
+        r.casaW !== null ? String(r.casaW).replace('.', ',') : '',
+        r.aeroWh !== null ? String(r.aeroWh).replace('.', ',') : '',
+        r.casaWh !== null ? String(r.casaWh).replace('.', ',') : ''
+      ];
+      lineas.push(fila.join(';'));
+    });
+
+    var blob = new Blob(['\uFEFF' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'shelly-em-' + (estado.modoVivo ? 'ultimas-24h' : estado.fechaSeleccionada) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* =========================================================================
+     10. CONTROLADORES DE EVENTOS
+     ========================================================================= */
+
+  function vincularEventosUI() {
+    // Checkboxes de visibilidad de series
+    document.getElementById('p1-chk-aero').addEventListener('change', renderizarPantalla);
+    document.getElementById('p1-chk-resto').addEventListener('change', renderizarPantalla);
+    document.getElementById('p1-chk-casa').addEventListener('change', renderizarPantalla);
+
+    // Conmutador Últimas 24h
+    document.getElementById('p1-btn-vivo').addEventListener('click', function () {
+      estado.modoVivo = true;
+      document.getElementById('p1-btn-vivo').classList.add('p1-btn--activo');
+      actualizarControlesFecha();
+      cargarDatosCompletos();
+    });
+
+    // Navegación por fechas
+    var inputFecha = document.getElementById('p1-input-fecha');
+    inputFecha.addEventListener('change', function (e) {
+      if (!e.target.value) return;
+      estado.modoVivo = false;
+      estado.fechaSeleccionada = e.target.value;
+      document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      actualizarControlesFecha();
+      cargarDatosCompletos();
+    });
+
+    document.getElementById('p1-btn-dia-ant').addEventListener('click', function () {
+      estado.modoVivo = false;
+      estado.fechaSeleccionada = sumarDiasAFechaUTC(estado.fechaSeleccionada, -1);
+      inputFecha.value = estado.fechaSeleccionada;
+      document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      actualizarControlesFecha();
+      cargarDatosCompletos();
+    });
+
+    document.getElementById('p1-btn-dia-sig').addEventListener('click', function () {
+      var hoy = obtenerHoyUTC();
+      var sig = sumarDiasAFechaUTC(estado.fechaSeleccionada, 1);
+      if (sig > hoy) return;
+      estado.modoVivo = false;
+      estado.fechaSeleccionada = sig;
+      inputFecha.value = estado.fechaSeleccionada;
+      document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      actualizarControlesFecha();
+      cargarDatosCompletos();
+    });
+
+    // Zona Horaria
+    document.getElementById('p1-btn-tz-utc').addEventListener('click', function () {
+      estado.modoUTC = true;
+      document.getElementById('p1-btn-tz-utc').classList.add('p1-btn--activo');
+      document.getElementById('p1-btn-tz-local').classList.remove('p1-btn--activo');
+      renderizarPantalla();
+    });
+
+    document.getElementById('p1-btn-tz-local').addEventListener('click', function () {
+      estado.modoUTC = false;
+      document.getElementById('p1-btn-tz-local').classList.add('p1-btn--activo');
+      document.getElementById('p1-btn-tz-utc').classList.remove('p1-btn--activo');
+      renderizarPantalla();
+    });
+
+    // Botones de acción
+    document.getElementById('p1-btn-reset-zoom').addEventListener('click', function () {
+      if (estado.instanciaGrafico) estado.instanciaGrafico.resetZoom();
+    });
+
+    document.getElementById('p1-btn-csv').addEventListener('click', exportarDatosCSV);
+  }
+
+  function actualizarControlesFecha() {
+    var hoy = obtenerHoyUTC();
+    var inputFecha = document.getElementById('p1-input-fecha');
+    inputFecha.max = hoy;
+
+    if (estado.modoVivo) {
+      estado.fechaSeleccionada = hoy;
+      inputFecha.value = hoy;
+    }
+
+    document.getElementById('p1-btn-dia-sig').disabled = (estado.fechaSeleccionada >= hoy);
+  }
+
+  /* =========================================================================
+     11. ARRANQUE E INICIALIZACIÓN
+     ========================================================================= */
+
+  function inicializar() {
+    estado.fechaSeleccionada = obtenerHoyUTC();
+    actualizarControlesFecha();
+
+    vincularEventosUI();
+    inicializarGrafico();
+
+    // Bucle de refresco secundario (actualiza contador de tiempo y stale timer)
+    setInterval(function () {
+      actualizarIndicadorRefresco();
+      actualizarBarraEstadoShelly();
+    }, 1000);
+
+    // Bucle de consulta incremental cada 60 segundos (solo en modo vivo)
+    setInterval(function () {
+      if (estado.modoVivo) {
+        cargarRefrescoIncremental();
+      }
+    }, INTERVALO_REFRESCO_MS);
+
+    // Carga inicial
+    cargarDatosCompletos();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializar);
+  } else {
+    inicializar();
+  }
+
+})();
 </script>
+{% endraw %}

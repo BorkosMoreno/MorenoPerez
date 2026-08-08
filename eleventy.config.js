@@ -4,12 +4,13 @@ export default async function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/robots.txt");
   eleventyConfig.addPassthroughCopy("src/site.webmanifest");
   eleventyConfig.addPassthroughCopy("src/assets/css");
+  eleventyConfig.addPassthroughCopy("src/assets/js");
   eleventyConfig.addPassthroughCopy("src/assets/favicons");
   eleventyConfig.addPassthroughCopy("src/assets/imagenes");
   eleventyConfig.addPassthroughCopy("src/descargas");
   eleventyConfig.addPassthroughCopy("src/fotografias");
 
-  // Configuración de URLs explícitas con extensión .html (Requisito 4)
+  // Configuración de URLs explícitas con extensión .html
   eleventyConfig.addGlobalData("permalink", () => {
     return "{{ page.filePathStem }}.html";
   });
