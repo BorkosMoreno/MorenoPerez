@@ -365,9 +365,9 @@ categoria: Domótica
       <button type="button" id="p1-btn-vivo" class="p1-btn p1-btn--activo">Últimas 24h</button>
 
       <div style="display: flex; align-items: center; gap: 0.2rem;">
-        <button type="button" id="p1-btn-dia-ant" class="p1-btn" title="Día anterior">?</button>
+        <button type="button" id="p1-btn-dia-ant" class="p1-btn" title="Día anterior">◄</button>
         <input type="date" id="p1-input-fecha" class="p1-input-fecha">
-        <button type="button" id="p1-btn-dia-sig" class="p1-btn" title="Día siguiente">?</button>
+        <button type="button" id="p1-btn-dia-sig" class="p1-btn" title="Día siguiente">►</button>
       </div>
 
       <span class="p1-etiqueta-control" style="margin-left: 0.5rem;">Zona:</span>
@@ -450,7 +450,7 @@ categoria: Domótica
         <div class="p1-cabecera-info">
           <span>Valores calculados sobre el periodo seleccionado.</span>
           <span class="p1-sep">•</span>
-          <span id="p1-nota-kwh">Energía = contador acumulado (último - primero del periodo).</span>
+          <span id="p1-nota-kwh">Energía = contador acumulado (último − primero del periodo).</span>
         </div>
       </div>
 
@@ -973,7 +973,7 @@ categoria: Domótica
     if ((kWhAero !== null && kWhAero < 0) || (kWhCasa !== null && kWhCasa < 0)) {
       notaEl.innerHTML = 'Energía = contador acumulado. <span class="p1-no-fiable">Se detectó un valor negativo (contador reiniciado).</span>';
     } else {
-      notaEl.textContent = 'Energía = contador acumulado (último - primero del periodo).';
+      notaEl.textContent = 'Energía = contador acumulado (último − primero del periodo).';
     }
   }
 
