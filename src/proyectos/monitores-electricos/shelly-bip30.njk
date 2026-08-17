@@ -16,6 +16,15 @@ categoria: Domótica
      3) La "Hora de la muestra" se muestra en la cabecera de la tarjeta.
      4) Etiqueta de zona horaria en modo LOCAL con la zona IANA del navegador.
      5) Texto "rango visible" -> "periodo seleccionado".
+   CAMBIOS (2026-08-10):
+     1) Restablecer zoom automáticamente al cambiar de periodo (24h / día /
+        flechas), pero NO durante el refresco automático de 60 s.
+     2) Barra de controles reorganizada en 3 grupos (izquierda/centro/derecha)
+        mediante CSS Grid, con margen de 25px en los grupos laterales.
+     3) Selección inicial de líneas: Aerotermia y Casa marcadas; Resto oculto.
+     4) Zona horaria inicial = Local (antes era UTC).
+     5) Cabecera de categoría+título+descripción unificada en una sola línea
+        (con wrap en pantallas pequeñas), solo para esta página.
    ========================================================================== -->
 
 <!-- ==========================================================================
@@ -30,7 +39,32 @@ categoria: Domótica
     margin-top: 1rem;
   }
 
-  /* BARRA DE CONTROLES DE LA GRÁFICA Y FILTROS */
+  /* 2026-08-10 - CREADO: Unifica en una sola línea (con wrap en pantallas pequeñas)
+     la etiqueta de categoría, el título y la descripción del encabezado de proyecto.
+     Solo afecta a esta página, porque el <style> se compila dentro de este HTML
+     y no altera el layout compartido proyecto.njk usado por otras páginas. */
+  .proyecto-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.75rem;
+  }
+  .proyecto-header .proyecto-categoria-etiqueta {
+    margin-bottom: 0;
+  }
+  .proyecto-header .proyecto-titulo {
+    margin-bottom: 0;
+    font-size: 1.4rem;
+  }
+  .proyecto-header .proyecto-sinopsis {
+    margin-top: 0;
+    font-size: 0.85rem;
+    color: #475569;
+  }
+
+  /* 2026-08-10 - ELIMINADO: Disposición flex con space-between.
+     Sustituida por grid de 3 columnas para poder centrar de verdad el grupo
+     central independientemente del ancho de los grupos laterales.
   .p1-barras-controles {
     display: flex;
     flex-wrap: wrap;
@@ -41,6 +75,37 @@ categoria: Domótica
     padding: 1rem;
     align-items: center;
     justify-content: space-between;
+  }
+  */
+
+  /* 2026-08-10 - CREADO: Disposición en grid de 3 columnas
+     (izquierda / centro / derecha). El centro queda realmente centrado. */
+  .p1-barras-controles {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    background-color: var(--gris-claro);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  /* 2026-08-10 - CREADO: Grupo izquierdo, con 25px de margen respecto al borde interior */
+  .p1-grupo-izquierda {
+    justify-self: start;
+    margin-left: 25px;
+  }
+
+  /* 2026-08-10 - CREADO: Grupo central, centrado horizontalmente */
+  .p1-grupo-centro {
+    justify-self: center;
+  }
+
+  /* 2026-08-10 - CREADO: Grupo derecho, con 25px de margen respecto al borde interior */
+  .p1-grupo-derecha {
+    justify-self: end;
+    margin-right: 25px;
   }
 
   .p1-grupo-control {
@@ -323,10 +388,28 @@ categoria: Domótica
     .p1-caja-grafico {
       height: 300px;
     }
+
+    /* 2026-08-10 - ELIMINADO: Ajuste pensado para el anterior layout flex
     .p1-barras-controles {
       flex-direction: column;
       align-items: stretch;
     }
+    */
+
+    /* 2026-08-10 - CREADO: En móvil se apila en una sola columna y se anulan
+       los márgenes de 25px para aprovechar el ancho disponible */
+    .p1-barras-controles {
+      grid-template-columns: 1fr;
+      justify-items: stretch;
+    }
+    .p1-grupo-izquierda,
+    .p1-grupo-centro,
+    .p1-grupo-derecha {
+      justify-self: stretch;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
     .p1-grupo-control {
       justify-content: space-between;
     }
@@ -343,7 +426,7 @@ categoria: Domótica
   <!-- BARRA SUPERIOR DE CONTROLES E INTERACCIÓN -->
   <section class="p1-barras-controles" aria-label="Controles de visualización">
 
-    <!-- SELECTOR DE LÍNEAS VISIBLES -->
+    <!-- 2026-08-10 - ELIMINADO: Orden y agrupación anteriores (Ver / Últimas24h+fecha+Zona / Reset+CSV)
     <div class="p1-grupo-control">
       <span class="p1-etiqueta-control">Ver:</span>
       <label class="p1-checkbox-label">
@@ -360,7 +443,6 @@ categoria: Domótica
       </label>
     </div>
 
-    <!-- MODO DE TIEMPO Y ZONA HORARIA -->
     <div class="p1-grupo-control">
       <button type="button" id="p1-btn-vivo" class="p1-btn p1-btn--activo">Últimas 24h</button>
 
@@ -375,10 +457,48 @@ categoria: Domótica
       <button type="button" id="p1-btn-tz-local" class="p1-btn">Local</button>
     </div>
 
-    <!-- ACCIONES EXTRA -->
     <div class="p1-grupo-control">
       <button type="button" id="p1-btn-reset-zoom" class="p1-btn">Restablecer Zoom</button>
       <button type="button" id="p1-btn-csv" class="p1-btn">Exportar CSV</button>
+    </div>
+    -->
+
+    <!-- 2026-08-10 - CREADO: Grupo izquierdo: reset de zoom + navegación temporal -->
+    <div class="p1-grupo-control p1-grupo-izquierda">
+      <button type="button" id="p1-btn-reset-zoom" class="p1-btn">Restablecer Zoom</button>
+      <button type="button" id="p1-btn-vivo" class="p1-btn p1-btn--activo">Últimas 24h</button>
+      <div style="display: flex; align-items: center; gap: 0.2rem;">
+        <button type="button" id="p1-btn-dia-ant" class="p1-btn" title="Día anterior">◄</button>
+        <input type="date" id="p1-input-fecha" class="p1-input-fecha">
+        <button type="button" id="p1-btn-dia-sig" class="p1-btn" title="Día siguiente">►</button>
+      </div>
+    </div>
+
+    <!-- 2026-08-10 - CREADO: Grupo central: selector de líneas visibles -->
+    <div class="p1-grupo-control p1-grupo-centro">
+      <span class="p1-etiqueta-control">Ver:</span>
+      <label class="p1-checkbox-label">
+        <input type="checkbox" id="p1-chk-aero" checked>
+        <span style="color: #16a34a;">Aerotermia</span>
+      </label>
+      <label class="p1-checkbox-label">
+        <!-- 2026-08-10 - MODIFICADO: Desmarcado por defecto (antes: checked) -->
+        <input type="checkbox" id="p1-chk-resto">
+        <span style="color: #2563eb;">Resto</span>
+      </label>
+      <label class="p1-checkbox-label">
+        <input type="checkbox" id="p1-chk-casa" checked>
+        <span style="color: #dc2626;">Casa</span>
+      </label>
+    </div>
+
+    <!-- 2026-08-10 - CREADO: Grupo derecho: exportación y zona horaria -->
+    <div class="p1-grupo-control p1-grupo-derecha">
+      <button type="button" id="p1-btn-csv" class="p1-btn">Exportar CSV</button>
+      <span class="p1-etiqueta-control" style="margin-left: 0.5rem;">Zona:</span>
+      <button type="button" id="p1-btn-tz-utc" class="p1-btn">UTC</button>
+      <!-- 2026-08-10 - MODIFICADO: Activo por defecto (antes el activo era UTC) -->
+      <button type="button" id="p1-btn-tz-local" class="p1-btn p1-btn--activo">Local</button>
     </div>
 
   </section>
@@ -549,7 +669,9 @@ categoria: Domótica
   var estado = {
     modoVivo: true,         // true = Últimas 24h dinámicas; false = Día específico
     fechaSeleccionada: '',  // 'YYYY-MM-DD' en UTC
-    modoUTC: true,          // true = Eje en UTC; false = Hora Local del navegador
+    // 2026-08-10 - MODIFICADO: Valor por defecto antes era "true" (UTC).
+    // Ahora la página arranca mostrando la Hora Local del navegador.
+    modoUTC: false,         // true = Eje en UTC; false = Hora Local del navegador
     registros: [],          // Array ordenado de lecturas: [{ t, aeroW, aeroWh, casaW, casaWh }]
     ultimoRegistro: null,   // Última muestra obtenida del backend
     instanteUltimoOk: null, // Timestamp local del último fetch con éxito
@@ -567,7 +689,7 @@ categoria: Domótica
   // 2026-08-09 - CREADO: Sufijo de zona horaria según el modo activo.
   // En UTC muestra " UTC"; en LOCAL muestra " LOCAL (Europe/Madrid)" (zona del navegador).
   function sufijoZona() {
-    return estado.modoUTC ? ' UTC' : (' LOCAL (' + ZONA_LOCAL + ')');
+    return estado.modoUTC ? ' UTC' : (' Hora local (' + ZONA_LOCAL + ')');
   }
 
   // Convierte timestamp en texto formateado respetando el conmutador UTC/Local
@@ -1091,6 +1213,15 @@ categoria: Domótica
      10. CONTROLADORES DE EVENTOS
      ========================================================================= */
 
+  // 2026-08-10 - CREADO: Restablece el zoom/pan del gráfico. Se invoca cada vez
+  // que el usuario cambia de periodo (Últimas 24h, calendario, día anterior/siguiente).
+  // No se invoca en el refresco automático incremental para no interrumpir al usuario.
+  function restablecerZoomGrafico() {
+    if (estado.instanciaGrafico) {
+      estado.instanciaGrafico.resetZoom('none');
+    }
+  }
+
   function vincularEventosUI() {
     // Checkboxes de visibilidad de series
     document.getElementById('p1-chk-aero').addEventListener('change', renderizarPantalla);
@@ -1101,6 +1232,8 @@ categoria: Domótica
     document.getElementById('p1-btn-vivo').addEventListener('click', function () {
       estado.modoVivo = true;
       document.getElementById('p1-btn-vivo').classList.add('p1-btn--activo');
+      // 2026-08-10 - CREADO: Restablecer zoom al cambiar de periodo
+      restablecerZoomGrafico();
       actualizarControlesFecha();
       cargarDatosCompletos();
     });
@@ -1112,6 +1245,8 @@ categoria: Domótica
       estado.modoVivo = false;
       estado.fechaSeleccionada = e.target.value;
       document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      // 2026-08-10 - CREADO: Restablecer zoom al cambiar de periodo
+      restablecerZoomGrafico();
       actualizarControlesFecha();
       cargarDatosCompletos();
     });
@@ -1121,6 +1256,8 @@ categoria: Domótica
       estado.fechaSeleccionada = sumarDiasAFechaUTC(estado.fechaSeleccionada, -1);
       inputFecha.value = estado.fechaSeleccionada;
       document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      // 2026-08-10 - CREADO: Restablecer zoom al cambiar de periodo
+      restablecerZoomGrafico();
       actualizarControlesFecha();
       cargarDatosCompletos();
     });
@@ -1133,6 +1270,8 @@ categoria: Domótica
       estado.fechaSeleccionada = sig;
       inputFecha.value = estado.fechaSeleccionada;
       document.getElementById('p1-btn-vivo').classList.remove('p1-btn--activo');
+      // 2026-08-10 - CREADO: Restablecer zoom al cambiar de periodo
+      restablecerZoomGrafico();
       actualizarControlesFecha();
       cargarDatosCompletos();
     });
