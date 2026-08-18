@@ -6,7 +6,7 @@ categoria: Domótica
 ---
 
 <!-- ==========================================================================
-   PÁGINA: shelly-bip30.njk
+   PÁGINA: shelly-bip30.njk   grok-4.6-high
    PROPÓSITO: Monitor de consumo eléctrico (Aerotermia / Casa / Resto) leyendo
               datos del Worker de Cloudflare (D1) y pintándolos con Chart.js.
    CAMBIOS (2026-08-09):
@@ -25,6 +25,13 @@ categoria: Domótica
      4) Zona horaria inicial = Local (antes era UTC).
      5) Cabecera de categoría+título+descripción unificada en una sola línea
         (con wrap en pantallas pequeñas), solo para esta página.
+   CAMBIOS (2026-08-17):   grok-4.6-high
+     1) Selector Trazo: Planos (stepped, sin puntos) / Picos (línea continua
+        + un punto por lectura). Por defecto Planos.
+     2) Selector Tooltip: Sí/No. Por defecto Sí en PC (pointer:fine y
+        ancho > 768px) y No en tableta/móvil. Se recuerda en localStorage.
+     3) VER centrado de verdad: columnas laterales con minmax(0, 1fr).
+     4) Trazo y Tooltip en el grupo derecho, junto a Zona UTC/Local.
    ========================================================================== -->
 
 <!-- ==========================================================================
@@ -82,7 +89,11 @@ categoria: Domótica
      (izquierda / centro / derecha). El centro queda realmente centrado. */
   .p1-barras-controles {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    /* 2026-08-17 - ELIMINADO: grid-template-columns: 1fr auto 1fr;
+       No centraba VER: el min-width implícito (auto) hacía que el grupo
+       izquierdo, más ancho, comiera espacio de la columna izquierda. */
+    /* 2026-08-17 - CREADO: laterales iguales aunque su contenido mida distinto. */
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
     background-color: var(--gris-claro);
@@ -95,6 +106,9 @@ categoria: Domótica
   .p1-grupo-izquierda {
     justify-self: start;
     margin-left: 25px;
+    /* 2026-08-17 - CREADO: permite envolver botones sin ensanchar la columna */
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* 2026-08-10 - CREADO: Grupo central, centrado horizontalmente */
@@ -106,6 +120,10 @@ categoria: Domótica
   .p1-grupo-derecha {
     justify-self: end;
     margin-right: 25px;
+    /* 2026-08-17 - CREADO: idem grupo izquierdo; al envolver, alinea a la derecha */
+    min-width: 0;
+    max-width: 100%;
+    justify-content: flex-end;
   }
 
   .p1-grupo-control {
@@ -499,6 +517,15 @@ categoria: Domótica
       <button type="button" id="p1-btn-tz-utc" class="p1-btn">UTC</button>
       <!-- 2026-08-10 - MODIFICADO: Activo por defecto (antes el activo era UTC) -->
       <button type="button" id="p1-btn-tz-local" class="p1-btn p1-btn--activo">Local</button>
+      <!-- 2026-08-17 - CREADO: Selector de trazo Planos / Picos -->
+      <span class="p1-etiqueta-control" style="margin-left: 0.5rem;">Trazo:</span>
+      <button type="button" id="p1-btn-trazo-planos" class="p1-btn p1-btn--activo" title="Línea escalonada, sin puntos">Planos</button>
+      <button type="button" id="p1-btn-trazo-picos" class="p1-btn" title="Línea continua con un punto por lectura">Picos</button>
+      <!-- 2026-08-17 - CREADO: Selector de tooltip. El botón activo lo marca el JS
+           (Sí en PC, No en tableta/móvil) antes de pintar el gráfico. -->
+      <span class="p1-etiqueta-control" style="margin-left: 0.5rem;">Tooltip:</span>
+      <button type="button" id="p1-btn-tooltip-si" class="p1-btn">Sí</button>
+      <button type="button" id="p1-btn-tooltip-no" class="p1-btn">No</button>
     </div>
 
   </section>
@@ -653,6 +680,10 @@ categoria: Domótica
   var LIMITE_STALE_AVISO_S  = 180;    // > 3 minutos sin datos (amarillo)
   var LIMITE_STALE_ERROR_S  = 900;    // > 15 minutos sin datos (rojo)
 
+  // 2026-08-17 - CREADO: claves de preferencia (solo trazo y tooltip)
+  var CLAVE_TRAZO = 'p1-estilo-trazo';
+  var CLAVE_TOOLTIP = 'p1-mostrar-tooltip';
+
   // 2026-08-09 - CREADO: Zona horaria IANA detectada del navegador (p.ej. "Europe/Madrid").
   // Se usa para etiquetar el modo LOCAL con la localidad real del usuario.
   var ZONA_LOCAL = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'Local';
@@ -677,8 +708,87 @@ categoria: Domótica
     instanteUltimoOk: null, // Timestamp local del último fetch con éxito
     instanciaGrafico: null,
     temporizadorRefresco: null,
-    cargando: false
+    cargando: false,
+    // 2026-08-17 - CREADO: el valor real se fija en inicializar()
+    estiloTrazo: 'planos',  // 'planos' | 'picos'
+    mostrarTooltip: true
   };
+
+  /* =========================================================================
+     2b. PREFERENCIAS DE TRAZO Y TOOLTIP (2026-08-17)
+     ========================================================================= */
+
+  // PC = puntero preciso (ratón) y ancho por encima del breakpoint móvil de esta página.
+  function esPantallaPc() {
+    var pointerFino = true;
+    var pantallaAncha = true;
+    if (window.matchMedia) {
+      pointerFino = window.matchMedia('(pointer: fine)').matches;
+      pantallaAncha = window.matchMedia('(min-width: 769px)').matches;
+    } else {
+      pantallaAncha = window.innerWidth >= 769;
+    }
+    return pointerFino && pantallaAncha;
+  }
+
+  function leerPreferenciaTrazo() {
+    try {
+      var v = localStorage.getItem(CLAVE_TRAZO);
+      if (v === 'picos' || v === 'planos') return v;
+    } catch (e) { /* localStorage no disponible (modo privado, etc.) */ }
+    return 'planos';
+  }
+
+  function leerPreferenciaTooltip() {
+    try {
+      var v = localStorage.getItem(CLAVE_TOOLTIP);
+      if (v === '1') return true;
+      if (v === '0') return false;
+    } catch (e) { /* localStorage no disponible */ }
+    return esPantallaPc();
+  }
+
+  function guardarPreferenciaTrazo(v) {
+    try { localStorage.setItem(CLAVE_TRAZO, v); } catch (e) { /* ignore */ }
+  }
+
+  function guardarPreferenciaTooltip(v) {
+    try { localStorage.setItem(CLAVE_TOOLTIP, v ? '1' : '0'); } catch (e) { /* ignore */ }
+  }
+
+  function aplicarEstiloDatasets() {
+    if (!estado.instanciaGrafico) return;
+    var esPicos = estado.estiloTrazo === 'picos';
+    estado.instanciaGrafico.data.datasets.forEach(function (ds) {
+      ds.stepped = esPicos ? false : true;
+      ds.pointRadius = esPicos ? 2 : 0;
+      ds.pointHoverRadius = esPicos ? 5 : 4;
+      ds.pointBorderWidth = 0;
+      ds.tension = 0;
+    });
+  }
+
+  function aplicarEstadoTooltip() {
+    if (!estado.instanciaGrafico) return;
+    estado.instanciaGrafico.options.plugins.tooltip.enabled = !!estado.mostrarTooltip;
+  }
+
+  function sincronizarBotonesTrazo() {
+    var btnPlanos = document.getElementById('p1-btn-trazo-planos');
+    var btnPicos = document.getElementById('p1-btn-trazo-picos');
+    if (!btnPlanos || !btnPicos) return;
+    var esPicos = estado.estiloTrazo === 'picos';
+    btnPlanos.classList.toggle('p1-btn--activo', !esPicos);
+    btnPicos.classList.toggle('p1-btn--activo', esPicos);
+  }
+
+  function sincronizarBotonesTooltip() {
+    var btnSi = document.getElementById('p1-btn-tooltip-si');
+    var btnNo = document.getElementById('p1-btn-tooltip-no');
+    if (!btnSi || !btnNo) return;
+    btnSi.classList.toggle('p1-btn--activo', !!estado.mostrarTooltip);
+    btnNo.classList.toggle('p1-btn--activo', !estado.mostrarTooltip);
+  }
 
   /* =========================================================================
      3. FORMATEADORES DE NÚMEROS Y FECHAS
@@ -989,6 +1099,10 @@ categoria: Domótica
         }
       }
     });
+
+    // 2026-08-17 - CREADO: aplica trazo y tooltip según preferencia / dispositivo
+    aplicarEstiloDatasets();
+    aplicarEstadoTooltip();
   }
 
   /* =========================================================================
@@ -1291,6 +1405,40 @@ categoria: Domótica
       renderizarPantalla();
     });
 
+    // 2026-08-17 - CREADO: Trazo Planos / Picos (no recarga datos)
+    document.getElementById('p1-btn-trazo-planos').addEventListener('click', function () {
+      estado.estiloTrazo = 'planos';
+      guardarPreferenciaTrazo('planos');
+      sincronizarBotonesTrazo();
+      aplicarEstiloDatasets();
+      if (estado.instanciaGrafico) estado.instanciaGrafico.update('none');
+    });
+
+    document.getElementById('p1-btn-trazo-picos').addEventListener('click', function () {
+      estado.estiloTrazo = 'picos';
+      guardarPreferenciaTrazo('picos');
+      sincronizarBotonesTrazo();
+      aplicarEstiloDatasets();
+      if (estado.instanciaGrafico) estado.instanciaGrafico.update('none');
+    });
+
+    // 2026-08-17 - CREADO: Tooltip Sí / No (no recarga datos)
+    document.getElementById('p1-btn-tooltip-si').addEventListener('click', function () {
+      estado.mostrarTooltip = true;
+      guardarPreferenciaTooltip(true);
+      sincronizarBotonesTooltip();
+      aplicarEstadoTooltip();
+      if (estado.instanciaGrafico) estado.instanciaGrafico.update('none');
+    });
+
+    document.getElementById('p1-btn-tooltip-no').addEventListener('click', function () {
+      estado.mostrarTooltip = false;
+      guardarPreferenciaTooltip(false);
+      sincronizarBotonesTooltip();
+      aplicarEstadoTooltip();
+      if (estado.instanciaGrafico) estado.instanciaGrafico.update('none');
+    });
+
     // Botones de acción
     document.getElementById('p1-btn-reset-zoom').addEventListener('click', function () {
       if (estado.instanciaGrafico) estado.instanciaGrafico.resetZoom();
@@ -1319,6 +1467,12 @@ categoria: Domótica
   function inicializar() {
     estado.fechaSeleccionada = obtenerHoyUTC();
     actualizarControlesFecha();
+
+    // 2026-08-17 - CREADO: lee preferencias antes de crear el gráfico
+    estado.estiloTrazo = leerPreferenciaTrazo();
+    estado.mostrarTooltip = leerPreferenciaTooltip();
+    sincronizarBotonesTrazo();
+    sincronizarBotonesTooltip();
 
     vincularEventosUI();
     inicializarGrafico();
